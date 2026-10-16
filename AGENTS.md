@@ -29,7 +29,7 @@ skills (`jahia-osgi-module`, `jahia-dev-osgi-module`, `jahia-osgi-ui-extension`,
 export JAVA_HOME=$(/usr/libexec/java_home -v 17)
 mvn clean install                  # unit tests, then yarn install + lint + build (tsc, vitest, vite), then the jar
 mvn -o clean install               # offline, when ~/.m2 and the yarn cache are warm
-mvn test                           # Java tests only run in the test phase, after the front-end steps; add -Dexec.skip=true to skip those
+mvn -o test -Dexec.skip=true       # Java unit tests only (-Dexec.skip=true skips the yarn steps)
 yarn lint && yarn build            # front-end only (Node 22, Yarn 4 through .yarnrc.yml)
 ```
 

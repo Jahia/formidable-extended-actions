@@ -20,6 +20,13 @@ skills (`jahia-osgi-module`, `jahia-dev-osgi-module`, `jahia-osgi-ui-extension`,
   site must have enabled (`AccountsGuard.MODULE_ID`). Keep the three equal.
 - React 18, Vite federation (`@jahia/vite-federation-plugin`), Moonstone 2.16.2, `@apollo/client` pinned to the host's
   3.14.0. Never `yarn dev` from an agent.
+- **The UI extension toolchain is pinned to what the Formidable core resolves**, in every module's `package.json`
+  (exact versions) and in `yarn.lock`, which was seeded from the core's lock: `@jahia/vite-federation-plugin` 0.1.1
+  (with `@module-federation/vite` 1.12.3), `@jahia/ui-extender` 1.2.0, `graphql` 16.13.2, `graphql-tag` 2.12.6, React 18.3.1,
+  `i18next` 20.6.1, `react-i18next` 11.18.6, Moonstone 2.16.2, Vite 7.3.5. A fresh lock resolved plugin 0.1.3,
+  ui-extender 1.3.0 and `@module-federation/*` 2.9.x, whose bundle left jContent stuck on "Loading Jahia" (RUNTIME-015, "already
+  been initialized with a different share scope"). Never `yarn up` or regenerate the lock without building a module and
+  checking that its `remoteEntry.js` names the same `builder:` as the core's.
 - A `.cfg` bundled in `META-INF/configurations/` starts with `# default configuration`, or it overwrites the operator's copy on
   every deploy. The CRM connections are factory configurations: never bundle one, never write a credential in the repository.
 - Every action that changes content has a CSRF decision; none of these actions is whitelisted (they ride the Formidable submit

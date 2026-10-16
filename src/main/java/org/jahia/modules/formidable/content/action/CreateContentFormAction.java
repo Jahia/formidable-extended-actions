@@ -2,7 +2,8 @@ package org.jahia.modules.formidable.content.action;
 
 import org.jahia.modules.formidable.content.folders.SubmitterFolder;
 import org.jahia.modules.formidable.content.mapping.ConfigException;
-import org.jahia.modules.formidable.content.mapping.Mappings;
+import org.jahia.modules.formidable.content.mapping.ContentMapping;
+import org.jahia.modules.formidable.content.mapping.FormFields;
 import org.jahia.modules.formidable.content.mapping.PairRule;
 import org.jahia.modules.formidable.content.messages.VisitorText;
 import org.jahia.modules.formidable.content.page.RefererPages;
@@ -126,7 +127,7 @@ public class CreateContentFormAction implements ContextualFormAction {
 
         JCRNodeWrapper action = context.actionNode();
         try {
-            Settings settings = readSettings(action);
+            Settings settings = readSettings(action, context.formNode());
             JCRNodeWrapper parentBase = ActionProps.reference(action, "parentFolder");
             JCRNodeWrapper filesBase = ActionProps.reference(action, "filesFolder");
             if (parentBase == null) {
@@ -163,22 +164,28 @@ public class CreateContentFormAction implements ContextualFormAction {
         }
     }
 
-    private Settings readSettings(JCRNodeWrapper action) throws ConfigException {
+    /**
+     * The action's settings: the content type, the {@code mapping} document (its field rows resolved against the
+     * fields of the form now, so a renamed field still maps), the companion-file rules and the rest.
+     */
+    private Settings readSettings(JCRNodeWrapper action, JCRNodeWrapper form) throws ConfigException {
         String type = ActionProps.string(action, "contentType");
         if (type == null || !TYPE_NAME.matcher(type).matches()) {
             throw new ConfigException("The action " + action.getPath() + " has no valid contentType (prefix:name)");
         }
+        FormFields fields = FormFields.of(form);
+        ContentMapping.Parts parts = ContentMapping.toParts(ContentMapping.parse(ActionProps.string(action, "mapping")), fields::nameOf);
         return new Settings(type,
                 ActionProps.string(action, "groupPrefix"),
-                ActionProps.string(action, "titleField"),
-                Mappings.parse("fieldMappings", ActionProps.lines(action, "fieldMappings")),
-                Mappings.parse("fileMappings", ActionProps.lines(action, "fileMappings")),
+                parts.titleField(),
+                parts.fieldMappings(),
+                parts.fileMappings(),
                 ActionProps.string(action, "fileMixin"),
-                Mappings.parse("fileProperties", ActionProps.lines(action, "fileProperties")),
-                Mappings.parse("fixedValues", ActionProps.lines(action, "fixedValues")),
-                ActionProps.string(action, "submitterProperty"),
-                ActionProps.string(action, "organizationProperty"),
-                ActionProps.string(action, "pageProperty"),
+                parts.fileProperties(),
+                parts.fixedValues(),
+                parts.submitterProperty(),
+                parts.organizationProperty(),
+                parts.pageProperty(),
                 PairRule.parse(ActionProps.lines(action, "requiredPairs")),
                 ActionProps.bool(action, "publish", true));
     }

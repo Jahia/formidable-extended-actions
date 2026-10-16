@@ -4,12 +4,12 @@ import en from '../main/resources/javascript/locales/en.json';
 import fr from '../main/resources/javascript/locales/fr.json';
 
 /**
- * The three CRM selectors share ONE i18n namespace (formidable-extended-actions): each family keeps its own sub-object of
+ * The selectors (the three CRM families and Create content's mapping) share ONE i18n namespace (formidable-extended-actions): each family keeps its own sub-object of
  * the locale files, and this test holds the merge together: the same keys in every language, a sub-object per family, and
  * every key a component asks for exists.
  */
 
-const FAMILIES = ['leadMapping', 'contactMapping', 'opportunityMapping'];
+const FAMILIES = ['leadMapping', 'contactMapping', 'opportunityMapping', 'contentMapping'];
 
 const sources = import.meta.glob('./**/*.tsx', {query: '?raw', import: 'default', eager: true}) as Record<string, string>;
 

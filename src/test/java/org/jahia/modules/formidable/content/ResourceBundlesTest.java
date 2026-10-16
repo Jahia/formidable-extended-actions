@@ -64,10 +64,11 @@ class ResourceBundlesTest {
     }
 
     @Test
-    void theCndHasTheSeventeenProperties() throws IOException {
-        // 16 settings + the autocreated title: a property added to the CND without a label shows up here
+    void theCndHasTheTenProperties() throws IOException {
+        // 9 settings (the mapping document replaced eight text settings) + the autocreated title: a property added to
+        // the CND without a label shows up here
         long settings = PROPERTY.matcher(cnd()).results().count();
-        org.junit.jupiter.api.Assertions.assertEquals(17L, settings, "properties declared by the CND");
+        org.junit.jupiter.api.Assertions.assertEquals(10L, settings, "properties declared by the CND");
     }
 
     @Test

@@ -1,0 +1,9 @@
+{
+	"name": "fmdbcnt:createContentAction",
+	"fields": [
+		{
+			"name": "mapping",
+			"selectorType": "ContentMapping"
+		}
+	]
+}

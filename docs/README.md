@@ -7,7 +7,7 @@ form action SPI) stays in the [Formidable repository](https://github.com/Jahia/f
 | Page | For | What it covers |
 |---|---|---|
 | [accounts.md](accounts.md) | administrators, authors | Create account and Sign in: the configuration file, the permission `formidableAccountsActions`, the sign-up and sign-in forms, e-mail activation, what is and is not protected, troubleshooting |
-| [content.md](content.md) | administrators, authors | Create content: the folder and group model, the mapping lines, files, the security model, a worked example, troubleshooting, the Java layout |
+| [content.md](content.md) | administrators, authors | Create content: the folder and group model, the mapping (a selector, one row per property), files, the security model, a worked example, troubleshooting, the Java layout |
 | [crm-connectors.md](crm-connectors.md) | everyone | What the three CRM families share (connections as operator configuration, the mapping selector, the GraphQL extension, error policy, security) and how they differ |
 | [salesforce.md](salesforce.md) | administrators, authors, developers | Create Salesforce Lead: Connected App and JWT setup, the connection file, authoring, value conversion, errors, security, troubleshooting |
 | [hubspot.md](hubspot.md) | administrators, authors, developers | Create HubSpot Contact: private app token, the connection file, authoring, errors, security, troubleshooting |

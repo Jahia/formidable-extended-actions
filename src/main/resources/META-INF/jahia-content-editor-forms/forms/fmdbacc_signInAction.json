@@ -1,0 +1,42 @@
+{
+	"nodeType": "fmdbacc:signInAction",
+	"priority": 2.0,
+	"sections": [
+		{
+			"name": "content",
+			"fieldSets": [
+				{
+					"name": "<main>",
+					"fields": [
+						{ "name": "loginField", "rank": 1.0 },
+						{ "name": "passwordField", "rank": 2.0 }
+					]
+				}
+			]
+		},
+		{
+			"name": "actionSettings",
+			"labelKey": "fmdb.section.actionSettings",
+			"rank": 1.07,
+			"fieldSets": [
+				{
+					"name": "redirect",
+					"labelKey": "fmdbacc.fieldset.afterSignIn",
+					"rank": 1.0,
+					"fields": [
+						{ "name": "redirectPage", "rank": 1.0 },
+						{ "name": "redirectParameter", "rank": 2.0 }
+					]
+				},
+				{
+					"name": "messages",
+					"labelKey": "fmdbacc.fieldset.messages",
+					"rank": 4.0,
+					"fields": [
+						{ "name": "failureMessage", "rank": 1.0 }
+					]
+				}
+			]
+		}
+	]
+}

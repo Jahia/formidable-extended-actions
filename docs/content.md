@@ -15,7 +15,7 @@ endpoint of its own (the form is submitted through the engine's endpoint). Java 
 
 - [Before you start (administrator)](#before-you-start-administrator)
 - [Configure the action (author)](#configure-the-action-author)
-- [The mapping lines](#the-mapping-lines)
+- [The mapping](#the-mapping)
 - [Files](#files)
 - [The security model](#the-security-model)
 - [A worked example](#a-worked-example)
@@ -41,33 +41,45 @@ Add a **Create content** action to the form. Turn on the form's **Require authen
 an anonymous submission (FMDB-009) before any action runs. The action refuses guests anyway, so the option is a convenience, not
 the protection.
 
-| Setting | What it does |
-|---|---|
-| **Content type** | The node type to create, with its prefix (`ctmd:submission`). It must exist, not be abstract, and be allowed in the target folder; checked at every submission |
-| **Content folder** | Where the content goes. With a group prefix, the folder that holds one subfolder per group |
-| **Files folder** | Where uploaded files go (same subfolder layout). Required as soon as a file is mapped |
-| **Group prefix** | Optional. The submitter's groups are searched for the one whose name starts with it; the rest of the name is the subfolder, in both folders. None, several or a missing subfolder refuse the submission |
-| **Title field** | The field whose value is the title (`jcr:title`) of the content, in every language of the site; it also names the node. The type needs `mix:title` |
-| **Field mappings** | `formField=property`, one line per field |
-| **File mappings** | `fileField=property`, one line per upload field |
-| **File mixin**, **File properties** | A mixin added to every stored file, and `formField=fileProperty` lines written on every stored file |
-| **Fixed values** | `property=value`, one line per value |
-| **Submitter property** | Receives the user name of the person who submitted |
-| **Organization property** | Receives the user's `j:organization` |
-| **Page property** | Receives a reference to the page the form was submitted from |
-| **Required companion files**, **Message for a missing companion file** | `dependentField<-field:mimePattern` rules and the sentence the visitor reads when one is broken |
-| **Publish** | On by default: the content and its files are published (asynchronously, within seconds), in every language of the site |
+The editor shows what defines the action first (**Content**), the rest under **Action settings**:
+
+| Where | Setting | What it does |
+|---|---|---|
+| Content | **Content type** | The type to create, chosen among the content types of the modules installed on the site. It must be allowed in the target folder; checked at every submission |
+| Content | **Content folder** | Where the content goes. With a group prefix, the folder that holds one subfolder per group |
+| Content | **What fills the content** | The mapping: one row per property of the type, then one per property of the stored files (see [The mapping](#the-mapping)) |
+| Action settings, Files | **Files folder** | Where uploaded files go (same subfolder layout). Required as soon as files are mapped |
+| Action settings, Files | **File mixin** | Optional. A mixin added to every stored file (`ctmdmix:credited` for a credit); the mapping then lists its properties under the files |
+| Action settings, Who owns it | **Group prefix** | Optional. The submitter's groups are searched for the one whose name starts with it; the rest of the name is the subfolder, in both folders. None, several or a missing subfolder refuse the submission |
+| Action settings, Companion files | **Required companion files**, **Message for a missing companion file** | `dependentField<-field:mimePattern` rules and the sentence the visitor reads when one is broken |
+| Action settings, Publication | **Publish** | On by default: the content and its files are published in the request, in every language of the site |
 
 Publish the form. Submissions run against the live workspace. The action does **not** carry the read-only compatibility marker:
 it writes, so the form is unavailable during a read-only maintenance window.
 
-## The mapping lines
+## The mapping
 
-Every mapping setting is a list of lines `left=right`. The line is cut at its **first** `=` (a fixed value may contain one);
-both sides are trimmed; blank lines are ignored. A malformed line is a configuration error: the submission is refused (the
-visitor reads "temporarily unavailable"), and the log names the setting and the line.
+Choose the content type first: **What fills the content** lists its properties (the title first, then the type's own, as its
+definition declares them; protected and hidden ones never), each with a **Filled from** choice among what the property can take:
 
-**Field mappings** convert the submitted text to the type the property's definition declares:
+| Source | For | What is written |
+|---|---|---|
+| **A form field** | text, number, boolean, date properties (single or multiple); the title | The field's value, converted to the property's type (below). The title also names the node |
+| **The files of an upload field** | `reference` / `weakreference` properties | The files, stored and referenced (see [Files](#files)) |
+| **A fixed value** | text, number, boolean, date properties | The value typed in the mapping; one per line for a multiple property |
+| **The person who submits** | a single text property | Their user name |
+| **Their organization** | a single text property | The `j:organization` of their account |
+| **The page the form was sent from** | a single reference property | A reference to that page (read from the request, checked: a page or main resource of the site the submitter can read) |
+
+Below, **The stored files** lists the properties of `jnt:file` and of the file mixin, each filled from a form field (the credit
+line written on every file, for instance). A property marked `*` is mandatory: the editor warns while it is not mapped.
+
+The mapping is stored as one JSON document (`mapping`); nobody types it. A form field is remembered by its node, its field key
+and its name, so **renaming a field keeps the mapping**; **deleting one** makes the editor say which row lost it, and the action
+refuse every submission (the visitor reads "temporarily unavailable", the log names the row) until another field is chosen.
+Rows whose property the chosen types no longer have are listed apart, to be removed.
+
+A **form field** is converted to the type the property's definition declares:
 
 | Property type | What is accepted |
 |---|---|
@@ -83,12 +95,12 @@ not valid" (the log says which field, never what was typed). A property that the
 the platform's own (`jcr:` and `rep:`, except `jcr:title` and `jcr:description`), or a type that text cannot fill (a reference,
 a binary) is a configuration error.
 
-When several settings fill the same property, the later one wins: **the form's fields, then the fixed values, then the
-submitter, the organization and the page**. What a visitor types can never override what the platform knows.
+When several rows fill the same multiple property, their values add up; for one property, **the form's fields, then the fixed
+values, then the submitter, the organization and the page** win in that order. What a visitor types can never override what the platform knows.
 
 ## Files
 
-**File mappings** (`fileField=property`) store the files of an upload field and point the content at them. The property must be a
+A property filled from **the files of an upload field** stores them and points the content at them. The property is a
 `reference` or `weakreference` property; if it is not multiple, a submission with more than one file for it is refused.
 
 Each file is stored as a `jnt:file` under the files folder (and the user's subfolder):
@@ -100,9 +112,9 @@ Each file is stored as a `jnt:file` under the files folder (and the user's subfo
 - the MIME type is the one the engine detected, never the browser's;
 - an image the JDK can read (PNG, JPEG, GIF, BMP) also gets `jmix:image` with its width and height (read from the header, the image
   is not decoded);
-- the **file mixin** is added, and the **file properties** are written (`credit=ctmdCredit`: the value of the field `credit`).
+- the **file mixin** is added, and the file properties of the mapping are written (the value of the field `credit` in `ctmdCredit`).
 
-Files whose field is not in the file mappings are not stored. **Required companion files** (`captions<-media:video/*`) say
+Files of an upload field the mapping does not use are not stored. **Required companion files** (`captions<-media:video/*`) say
 that when `media` holds *n* files whose detected type matches the pattern (`video/mp4`, `video/*`, `*/*`),
 `captions` must hold at least *n* files; otherwise the submission is refused with your sentence (or a generic one) before
 anything is written.
@@ -172,14 +184,20 @@ The action:
 | Content type | `ctmd:submission` |
 | Content folder / Files folder | `/sites/orvane/contents/briefs` / `/sites/orvane/files/briefs` |
 | Group prefix | `orvane-supplier-` |
-| Title field | `title` |
-| Field mappings | `summary=description` |
-| File mappings | `media=media`<br>`captions=captions` |
-| File mixin / File properties | `ctmdmix:credited` / `credit=ctmdCredit` |
-| Fixed values | `submissionStatus=submitted` |
-| Submitter, Organization, Page property | `submittedBy`, `company`, `brief` |
+| File mixin | `ctmdmix:credited` |
 | Required companion files | `captions<-media:video/*` |
 | Message for a missing companion file | Every video needs its captions file (WebVTT). |
+
+The mapping:
+
+| Property | Filled from |
+|---|---|
+| Title (`jcr:title`) | the form field `title` |
+| `description` | the form field `summary` |
+| `media`, `captions` | the files of the upload fields `media`, `captions` |
+| `submissionStatus` | the fixed value `submitted` |
+| `submittedBy`, `company`, `brief` | the person who submits, their organization, the page the form was sent from |
+| The stored files: `ctmdCredit` | the form field `credit` |
 
 A member of `orvane-supplier-northlight` who submits from `/sites/orvane/contents/briefs/summer-launch.html` creates
 `/sites/orvane/contents/briefs/northlight/<title>`, with `submissionStatus` `submitted`, `submittedBy` their name, `company` their
@@ -198,7 +216,7 @@ The server log says what the visitor is not told, with the prefix `[formidable-c
 | same | `(UNSAFE)` | What is left of the group name is not a plain node name |
 | same | `The folder <path> of <user> does not exist` | The subfolder was not created: create it, with its ACL, and publish it |
 | same | `<user> cannot read <path> in live` | The folder's ACL does not give the user's group a read role, or it is not published |
-| This form is temporarily unavailable | `the action is misconfigured. Setting '...'` | A malformed line, an unknown property, a type that cannot be created there, a folder that is not published |
+| This form is temporarily unavailable | `the action is misconfigured. Setting 'mapping': ...` | A field the mapping reads left the form, a property the type no longer has, a type that cannot be created there, a folder that is not published |
 | One of the values you entered is not valid | `field '...': Property '...' expects ...` | A value that does not fit its property |
 | The author's sentence, or "a file is missing" | `a file of '...' matching ... has no companion` | A required companion file is missing |
 | We could not save your submission | `could not be created in <path>: nothing was kept` | The platform refused a step (mandatory property, constraint, publication); the cause is logged |

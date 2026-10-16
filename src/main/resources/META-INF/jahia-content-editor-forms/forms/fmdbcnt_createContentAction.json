@@ -1,0 +1,60 @@
+{
+	"nodeType": "fmdbcnt:createContentAction",
+	"priority": 2.0,
+	"sections": [
+		{
+			"name": "content",
+			"fieldSets": [
+				{
+					"name": "<main>",
+					"fields": [
+						{ "name": "contentType", "rank": 1.0 },
+						{ "name": "parentFolder", "rank": 2.0 },
+						{ "name": "mapping", "rank": 3.0 }
+					]
+				}
+			]
+		},
+		{
+			"name": "actionSettings",
+			"labelKey": "fmdb.section.actionSettings",
+			"rank": 1.07,
+			"fieldSets": [
+				{
+					"name": "files",
+					"labelKey": "fmdbcnt.fieldset.files",
+					"rank": 1.0,
+					"fields": [
+						{ "name": "filesFolder", "rank": 1.0 },
+						{ "name": "fileMixin", "rank": 2.0 }
+					]
+				},
+				{
+					"name": "ownership",
+					"labelKey": "fmdbcnt.fieldset.ownership",
+					"rank": 2.0,
+					"fields": [
+						{ "name": "groupPrefix", "rank": 1.0 }
+					]
+				},
+				{
+					"name": "companionFiles",
+					"labelKey": "fmdbcnt.fieldset.companionFiles",
+					"rank": 3.0,
+					"fields": [
+						{ "name": "requiredPairs", "rank": 1.0 },
+						{ "name": "pairRefusalMessage", "rank": 2.0 }
+					]
+				},
+				{
+					"name": "publication",
+					"labelKey": "fmdbcnt.fieldset.publication",
+					"rank": 4.0,
+					"fields": [
+						{ "name": "publish", "rank": 1.0 }
+					]
+				}
+			]
+		}
+	]
+}

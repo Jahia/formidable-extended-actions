@@ -4,9 +4,10 @@
 	"private": true,
 	"type": "module",
 	"scripts": {
-		"build": "tsc --noEmit && vitest run --passWithNoTests && vite build",
+		"build": "node scripts/check-editor-forms.mjs && tsc --noEmit && vitest run --passWithNoTests && vite build",
 		"test": "vitest run --passWithNoTests",
-		"lint": "eslint src/javascript"
+		"lint": "eslint src/javascript",
+		"check:forms": "node scripts/check-editor-forms.mjs"
 	},
 	"dependencies": {
 		"@apollo/client": "3.14.0",

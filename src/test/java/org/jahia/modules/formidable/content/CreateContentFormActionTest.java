@@ -9,6 +9,7 @@ import org.jahia.modules.formidable.engine.api.FormActionContext;
 import org.jahia.modules.formidable.engine.api.FormActionException;
 import org.jahia.modules.formidable.engine.api.FormActionResult;
 import org.jahia.modules.formidable.engine.api.SubmittedFile;
+import org.jahia.services.content.JCRNodeIteratorWrapper;
 import org.jahia.services.content.JCRNodeWrapper;
 import org.jahia.services.content.JCRPropertyWrapper;
 import org.jahia.services.content.JCRSessionWrapper;
@@ -38,6 +39,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.RETURNS_DEFAULTS;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -50,6 +52,20 @@ class CreateContentFormActionTest {
     private final Map<String, String> strings = new HashMap<>();
     private final Map<String, List<String>> lists = new HashMap<>();
     private final Map<String, JCRNodeWrapper> references = new HashMap<>();
+    /** The rows of the action's mapping document (JSON objects); rawMapping, when set, is stored instead. */
+    private final List<String> rows = new ArrayList<>();
+    private String rawMapping;
+    /** The fields of the form the action sits in: what a mapping row may name. */
+    private static final List<String> FORM_FIELDS = List.of("title", "summary", "media", "captions", "minutes");
+
+    /** An iterator over nodes, answering without stubbing (it is built inside other stubs' answers). */
+    private static JCRNodeIteratorWrapper iterator(List<JCRNodeWrapper> nodes) {
+        return mock(JCRNodeIteratorWrapper.class, call -> switch (call.getMethod().getName()) {
+            case "iterator" -> nodes.iterator();
+            case "hasNext" -> false;
+            default -> RETURNS_DEFAULTS.answer(call);
+        });
+    }
     private final List<String> unreadable = new ArrayList<>();
     private final List<String> existingNodes = new ArrayList<>();
     private final List<String> readAttempts = new ArrayList<>();
@@ -107,13 +123,12 @@ class CreateContentFormActionTest {
         references.put("filesFolder", files);
         strings.put("contentType", Fakes.Catalog.CONTENT_TYPE);
         strings.put("groupPrefix", "orvane-supplier-");
-        strings.put("titleField", "title");
-        lists.put("fieldMappings", List.of("summary=description"));
-        lists.put("fileMappings", List.of("media=media"));
-        lists.put("fixedValues", List.of("submissionStatus=submitted"));
+        rows.add(row("jcr:title", "field", "title"));
+        rows.add(row("description", "field", "summary"));
+        rows.add(row("media", "files", "media"));
+        rows.add("{\"target\":\"content\",\"property\":\"submissionStatus\",\"source\":\"constant\",\"values\":[\"submitted\"]}");
+        rows.add(row("submittedBy", "submitter", null));
         lists.put("requiredPairs", List.of("captions<-media:video/*"));
-        lists.put("submitterProperty", List.of());
-        strings.put("submitterProperty", "submittedBy");
         actionNode = actionNode();
 
         visitor = mock(JCRSessionWrapper.class);
@@ -163,7 +178,20 @@ class CreateContentFormActionTest {
         return folder;
     }
 
+    /** A row of the mapping document: a content property, its source, the form field it reads (field and files rows). */
+    private static String row(String property, String source, String field) {
+        return "{\"target\":\"content\",\"property\":\"" + property + "\",\"source\":\"" + source + "\""
+                + (field == null ? "" : ",\"fieldName\":\"" + field + "\"") + "}";
+    }
+
+    /** Replaces the rows filling the content from form fields (jcr:title kept) by the given ones. */
+    private void fieldRows(String... replacement) {
+        rows.removeIf(json -> json.contains("\"source\":\"field\"") && !json.contains("jcr:title"));
+        rows.addAll(List.of(replacement));
+    }
+
     private JCRNodeWrapper actionNode() throws Exception {
+        strings.put("mapping", rawMapping != null ? rawMapping : "{\"version\":1,\"rows\":[" + String.join(",", rows) + "]}");
         JCRNodeWrapper node = mock(JCRNodeWrapper.class);
         when(node.getPath()).thenReturn("/sites/orvane/forms/supplier/actions/createContent");
         when(node.hasProperty(anyString())).thenAnswer(call -> {
@@ -203,6 +231,21 @@ class CreateContentFormActionTest {
         when(request.getHeader("Referer")).thenReturn(referer);
         when(request.getServerName()).thenReturn("www.example.com");
         JCRNodeWrapper form = mock(JCRNodeWrapper.class);
+        JCRNodeWrapper fields = mock(JCRNodeWrapper.class);
+        List<JCRNodeWrapper> formFields = new ArrayList<>();
+        for (String name : FORM_FIELDS) {
+            JCRNodeWrapper field = mock(JCRNodeWrapper.class);
+            when(field.getName()).thenReturn(name);
+            when(field.getIdentifier()).thenReturn("id-" + name);
+            when(field.isNodeType("fmdbmix:formElement")).thenReturn(true);
+            JCRNodeIteratorWrapper none = iterator(List.of());
+            when(field.getNodes()).thenReturn(none);
+            formFields.add(field);
+        }
+        JCRNodeIteratorWrapper all = iterator(formFields);
+        when(fields.getNodes()).thenReturn(all);
+        when(form.hasNode("fields")).thenReturn(true);
+        when(form.getNode("fields")).thenReturn(fields);
         JCRSiteNode site = mock(JCRSiteNode.class);
         when(site.getDefaultLanguage()).thenReturn("en");
         when(site.getLanguagesAsLocales()).thenReturn(List.of(Locale.FRENCH, Locale.ENGLISH));
@@ -373,7 +416,7 @@ class CreateContentFormActionTest {
 
     @Test
     void aValueThatDoesNotFitIsRefusedWithTheGenericSentenceAndTheDetailStaysInTheLog() throws Exception {
-        lists.put("fieldMappings", List.of("minutes=durationMinutes"));
+        fieldRows(row("durationMinutes", "field", "minutes"));
         values.put("minutes", List.of("two hours"));
         FormActionException error = refused(422);
         assertFalse(error.getVisitorMessage().contains("durationMinutes"), "the visitor is not told property names");
@@ -383,15 +426,22 @@ class CreateContentFormActionTest {
 
     @Test
     void aMappingToAnUnknownPropertyIsAConfigurationError() throws Exception {
-        lists.put("fieldMappings", List.of("summary=nosuch"));
+        fieldRows(row("nosuch", "field", "summary"));
         FormActionException error = refused(503);
         assertFalse(error.getVisitorMessage().contains("nosuch"));
     }
 
     @Test
-    void aMalformedMappingLineIsAConfigurationError() throws Exception {
-        lists.put("fieldMappings", List.of("summary"));
+    void aMappingThatIsNotJsonIsAConfigurationError() throws Exception {
+        rawMapping = "summary=description";
         refused(503);
+    }
+
+    @Test
+    void aRowWhoseFieldLeftTheFormIsAConfigurationError() throws Exception {
+        fieldRows(row("description", "field", "deletedField"));
+        FormActionException error = refused(503);
+        assertFalse(error.getVisitorMessage().contains("deletedField"), "the visitor is not told field names");
     }
 
     @Test
@@ -405,7 +455,7 @@ class CreateContentFormActionTest {
 
     @Test
     void thePageTheFormWasSubmittedFromIsReferencedWhenTheSubmitterCanReadIt() throws Exception {
-        strings.put("pageProperty", "brief");
+        rows.add(row("brief", "page", null));
         referer = "https://www.example.com/fr/sites/orvane/contents/briefs/summer-launch.html";
         JCRNodeWrapper page = mock(JCRNodeWrapper.class);
         when(page.isNodeType("jmix:mainResource")).thenReturn(true);
@@ -420,7 +470,7 @@ class CreateContentFormActionTest {
 
     @Test
     void aRefererThatNamesAnUnreadableOrForeignOrNonPageNodeLeavesThePropertyEmpty() throws Exception {
-        strings.put("pageProperty", "brief");
+        rows.add(row("brief", "page", null));
         // unreadable by the submitter
         referer = "https://www.example.com/sites/orvane/home/secret.html";
         unreadable.add("/sites/orvane/home/secret");
@@ -445,7 +495,7 @@ class CreateContentFormActionTest {
 
     @Test
     void theSubmittersNameAndOrganizationComeFromThePlatform() throws Exception {
-        strings.put("organizationProperty", "company");
+        rows.add(row("company", "organization", null));
         values.put("fakeUser", List.of("someone-else"));
         action.execute(context());
         var plan = writer.plans.get(0);

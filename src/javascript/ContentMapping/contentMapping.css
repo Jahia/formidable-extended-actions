@@ -1,0 +1,70 @@
+/*
+ * The mapping is two grids (the content, then the stored files) of three tracks: the property, its source, its value.
+ * Rows are `display: contents`, so their cells sit on the grid tracks and the columns line up whatever a row renders.
+ * minmax(0, ...) tracks and min-width: 0 cells let the dropdowns shrink instead of pushing the row apart.
+ */
+.fmdbxa-contentMapping {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    width: 100%;
+}
+
+.fmdbxa-contentMappingGrid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 0.9fr) minmax(0, 1.4fr);
+    gap: 0.5rem 0.75rem;
+    align-items: center;
+}
+
+.fmdbxa-contentMappingGrid > * > * {
+    min-width: 0;
+}
+
+.fmdbxa-contentMappingRow {
+    display: contents;
+}
+
+.fmdbxa-contentMappingHeader > * {
+    color: var(--color-gray);
+    padding-bottom: 0.25rem;
+    border-bottom: 1px solid var(--color-gray_light40, var(--color-gray_light));
+}
+
+.fmdbxa-contentMappingProperty {
+    display: flex;
+    flex-direction: column;
+}
+
+.fmdbxa-contentMappingTitle {
+    margin-top: 0.75rem;
+}
+
+.fmdbxa-contentMappingMuted {
+    color: var(--color-gray);
+}
+
+.fmdbxa-contentMappingWarning {
+    color: var(--color-warning, #e67e22);
+}
+
+.fmdbxa-contentMappingError {
+    color: var(--color-danger, #e0182d);
+}
+
+.fmdbxa-contentMappingOrphan {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* A multiple fixed value: one value per line, drawn like a Moonstone input. */
+.fmdbxa-contentMappingValues {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 0.5rem;
+    border: 1px solid var(--color-gray40, var(--color-gray_light));
+    border-radius: 4px;
+    font: inherit;
+    resize: vertical;
+}

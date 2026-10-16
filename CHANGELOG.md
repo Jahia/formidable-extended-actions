@@ -21,6 +21,17 @@ the separate modules; only the module id, the resource bundle and the UI extensi
 * **Efficy** - Create Efficy Opportunity (`fmdbeff:createOpportunityAction`), `EfficyOpportunityMapping`, `formidableEfficy`.
   Same origin.
 
+* **Content Editor layouts** for Create account, Sign in and Create content: what defines the action first (Content), the
+  rest in an **Action settings** section (rank 1.07) of titled fieldsets: after sign-up or sign-in, password rule, e-mail
+  activation, messages; files, who owns it, companion files, publication. `scripts/check-editor-forms.mjs`, run by the build,
+  fails when a property of a laid-out action is not placed exactly once.
+* **Create content mapping selector** (`ContentMapping`): one row per property of the chosen content type, then of the stored
+  files, each filled from a form field, the files of an upload field, a fixed value, the submitter, their organization or the
+  page the form was sent from; stored as one JSON document, `mapping`, which replaces the eight text settings `titleField`,
+  `fieldMappings`, `fileMappings`, `fileProperties`, `fixedValues`, `submitterProperty`, `organizationProperty`,
+  `pageProperty`. A field is remembered by node, field key and name: a renamed field keeps its row. The content type and the
+  file mixin are chosen from the types of the site's modules (`formidableContentTypes`, `formidableContentFileMixins`).
+
 ### Changes against the separate modules
 
 * One bundle, `formidable-extended-actions`, group `org.jahia.community.modules`: the `dev-unsigned` profile is gone.

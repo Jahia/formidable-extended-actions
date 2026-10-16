@@ -1,0 +1,75 @@
+import {describe, expect, it} from 'vitest';
+import {fieldsFor, orphanRows, parseMapping, resolveRowField, serializeMapping, siblingValue, sourcesFor, splitValues, visibleProperties} from './ContentMapping.utils';
+import type {FormFieldOption, PropertyOption} from './ContentMapping.types';
+
+const property = (name: string, requiredType: string, multiple = false): PropertyOption => ({name, label: name, requiredType, multiple, mandatory: false});
+const FIELDS: FormFieldOption[] = [
+    {id: 'id-title', name: 'title', label: 'Title', isFile: false},
+    {id: 'id-media', name: 'media', label: 'Photos', isFile: true, fieldKey: 'k-media'}
+];
+
+describe('sourcesFor', () => {
+    it('offers what the action accepts on the server, property by property', () => {
+        expect(sourcesFor(property('jcr:title', 'STRING'), 'content')).toEqual(['field']);
+        expect(sourcesFor(property('company', 'STRING'), 'content')).toEqual(['field', 'constant', 'submitter', 'organization']);
+        expect(sourcesFor(property('tags', 'STRING', true), 'content')).toEqual(['field', 'constant']);
+        expect(sourcesFor(property('shotDate', 'DATE'), 'content')).toEqual(['field', 'constant']);
+        expect(sourcesFor(property('media', 'WEAKREFERENCE', true), 'content')).toEqual(['files']);
+        expect(sourcesFor(property('brief', 'WEAKREFERENCE'), 'content')).toEqual(['files', 'page']);
+        expect(sourcesFor(property('data', 'BINARY'), 'content')).toEqual([]);
+        expect(sourcesFor(property('ctmdCredit', 'STRING'), 'file')).toEqual(['field']);
+        expect(sourcesFor(property('ref', 'REFERENCE'), 'file')).toEqual([]);
+    });
+});
+
+describe('the stored document', () => {
+    it('round-trips each kind of row in the shape the Java side reads, dropping what a source does not own', () => {
+        const doc = parseMapping(JSON.stringify({version: 1, future: 'kept', rows: [
+            {target: 'content', property: 'jcr:title', source: 'field', nodeId: 'id-title', fieldName: 'title', values: ['stray']},
+            {target: 'content', property: 'status', source: 'constant', values: ['submitted', '  '], nodeId: 'stray'},
+            {target: 'content', property: 'submittedBy', source: 'submitter', fieldName: 'stray'},
+            {target: 'file', property: 'ctmdCredit', source: 'field', nodeId: 'id-credit', extra: 1},
+            {source: 'field'}
+        ]}));
+        const stored = JSON.parse(serializeMapping(doc));
+
+        expect(stored.future).toBe('kept');
+        expect(stored.rows).toEqual([
+            {target: 'content', property: 'jcr:title', source: 'field', nodeId: 'id-title', fieldKey: '', fieldName: 'title'},
+            {target: 'content', property: 'status', source: 'constant', values: ['submitted']},
+            {target: 'content', property: 'submittedBy', source: 'submitter'},
+            {target: 'file', property: 'ctmdCredit', source: 'field', nodeId: 'id-credit', fieldKey: '', fieldName: '', extra: 1}
+        ]);
+    });
+
+    it('reads anything unreadable as an empty mapping', () => {
+        expect(parseMapping('caption=caption').rows).toEqual([]);
+        expect(parseMapping(undefined).rows).toEqual([]);
+    });
+});
+
+describe('fields', () => {
+    it('are the upload fields for files and the others for a value, and a row resolves by id, key, then name', () => {
+        expect(fieldsFor('files', FIELDS).map(field => field.name)).toEqual(['media']);
+        expect(fieldsFor('field', FIELDS).map(field => field.name)).toEqual(['title']);
+        expect(resolveRowField({target: 'content', property: 'x', source: 'files', fieldKey: 'k-media'}, FIELDS)?.id).toBe('id-media');
+        expect(resolveRowField({target: 'content', property: 'x', source: 'field', nodeId: 'gone', fieldName: 'title'}, FIELDS)?.id).toBe('id-title');
+        expect(resolveRowField({target: 'content', property: 'x', source: 'field', nodeId: 'gone'}, FIELDS)).toBeUndefined();
+    });
+});
+
+describe('the rows shown', () => {
+    it('put the title first, leave out what nothing can fill, and set apart the rows of properties the types lost', () => {
+        const props = [property('caption', 'STRING'), property('data', 'BINARY'), property('jcr:title', 'STRING')];
+        expect(visibleProperties(props, 'content').map(p => p.name)).toEqual(['jcr:title', 'caption']);
+        const rows = [{target: 'content' as const, property: 'gone', source: 'submitter' as const}, {target: 'content' as const, property: 'caption', source: 'constant' as const}];
+        expect(orphanRows(rows, props, []).map(row => row.property)).toEqual(['gone']);
+    });
+
+    it('split one value per line and read a sibling setting whatever shape Formik keeps', () => {
+        expect(splitValues('a\n\n b \r\nc')).toEqual(['a', 'b', 'c']);
+        expect(siblingValue({k: ' ctmd:submission '}, 'k')).toBe('ctmd:submission');
+        expect(siblingValue({k: ['ctmdmix:credited']}, 'k')).toBe('ctmdmix:credited');
+        expect(siblingValue(undefined, 'k')).toBe('');
+    });
+});

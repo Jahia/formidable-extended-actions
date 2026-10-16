@@ -1,6 +1,6 @@
 # CRM connector actions: Salesforce, HubSpot, Efficy
 
-Three families of the `formidable-extended-actions` bundle send form submissions to a CRM as a new record. They share one
+Three modules of this repository (`formidable-salesforce`, `formidable-hubspot`, `formidable-efficy`) send form submissions to a CRM as a new record. They share one
 architecture, one authoring experience and one security model; only the CRM-specific parts differ.
 This page is the entry point for the three. Each family has its own page with the full reference:
 
@@ -57,8 +57,9 @@ Release notes: [CHANGELOG.md](../CHANGELOG.md). The three families come from the
   whole submission with error code `FMDB-008`; when false the error is logged and the other actions
   still run.
 - **English and French** labels, JUnit tests and two Cypress specs each (reference material, see
-  [tests/README.md](../tests/README.md)), run against a mock server shipped in `tests/`. The three selectors are registered by
-  ONE UI extension (`src/javascript/init.tsx`), in the i18n namespace `formidable-extended-actions`.
+  [tests/README.md](../tests/README.md)), run against a mock server shipped in `tests/`. Each module has its own UI extension
+  (`formidable-<crm>/src/javascript/init.tsx`) that registers its selector, in the i18n namespace of the module (`formidable-salesforce`,
+  `formidable-hubspot`, `formidable-efficy`). The three are independent: install the one you use, the others are not needed.
 
 ## What differs per CRM
 
@@ -172,11 +173,12 @@ flags as missing.
 
 ```bash
 # from the repository root, JDK 17, Node 22, Yarn 4
-mvn clean install
+mvn clean install                       # the five modules
+mvn clean install -pl formidable-hubspot   # one of them
 ```
 
-One jar, `target/formidable-extended-actions-0.1.0-SNAPSHOT.jar` (group `org.jahia.community.modules`, no signature needed
-on Jahia Enterprise). Deploy it with the provisioning API or the module manager, enable the module on the site, then reload
+One jar per module, `formidable-<crm>/target/formidable-<crm>-0.1.0-SNAPSHOT.jar` (group `org.jahia.community.modules`, no signature
+needed on Jahia Enterprise). Deploy the one you use with the provisioning API or the module manager, enable the module on the site, then reload
 the jContent tab (the editor bundle is federated at page load).
 
 Tests:
@@ -206,12 +208,12 @@ playground again afterwards if you use it for manual testing.
 
 ## Adding a fourth connector
 
-Copy the smallest family (`formidable-hubspot`'s package `org.jahia.modules.formidable.hubspot`) to a package of its own and keep its layout: `config/` (OCD +
+Copy the smallest module (`formidable-hubspot`, package `org.jahia.modules.formidable.hubspot`) to a module of its own (a directory, a pom, a line in the root `<modules>` and in the `workspaces` of the root `package.json`) and keep its layout: `config/` (OCD +
 connection), `client/` (REST client, URL validator, error parser), `mapping/` (rows, coercer,
 payload builder), `action/`, `choicelist/`, `graphql/`. Keep the same GraphQL shape and the same
 mapping JSON contract (`version`, `rows[]` with `source`, `fieldKey`, `fieldName`, `nodeId`,
-`value`) so the selectors stay interchangeable. In this bundle that also means: a block in `definitions.cnd` (the namespace goes in
-its header, once), the labels and tooltips in `formidable-extended-actions*.properties`, a fieldset JSON under
-`META-INF/jahia-content-editor-forms/fieldsets/`, a selector registered in `src/javascript/init.tsx` with its locale keys under
-a sub-object of its own, and two Cypress specs plus a mock server. The
+`value`) so the selectors stay interchangeable. In a module of this repository that also means: its own `definitions.cnd` (the namespace goes in
+its header, once), the labels and tooltips in `formidable-<crm>*.properties` (the bundle is named after the module), a fieldset JSON under
+`META-INF/jahia-content-editor-forms/fieldsets/`, a selector registered in its own `src/javascript/init.tsx` with its locale keys under
+one key and the namespace of the module, and two Cypress specs plus a mock server. The
 [how-to-create-form-action](https://github.com/Jahia/formidable/blob/main/docs/extension/how-to-create-form-action.md) page covers the engine SPI itself.

@@ -1,6 +1,6 @@
-# Salesforce connector (family `salesforce` of formidable-extended-actions)
+# Salesforce connector (module `formidable-salesforce`)
 
-A family of the `formidable-extended-actions` bundle (Java package `org.jahia.modules.formidable.salesforce`) that sends form submissions to **Salesforce as Leads**.
+The module `formidable-salesforce` (Java package `org.jahia.modules.formidable.salesforce`) that sends form submissions to **Salesforce as Leads**.
 
 A contributor adds the **Create Salesforce Lead** action to any form, picks a Salesforce
 connection and maps the Lead fields to the form fields (or to constants) directly in Content
@@ -13,7 +13,7 @@ architecture and the same authoring experience.
 
 Part of the CRM connector family with the two other families: see
 [crm-connectors.md](./crm-connectors.md) for the shared architecture and
-the side-by-side comparison, and the [CHANGELOG](../CHANGELOG.md) of the bundle.
+the side-by-side comparison, and the [CHANGELOG](../CHANGELOG.md).
 
 ## Contents
 
@@ -31,6 +31,8 @@ the side-by-side comparison, and the [CHANGELOG](../CHANGELOG.md) of the bundle.
 - [Limitations and roadmap](#limitations-and-roadmap)
 
 ## What you get
+
+Paths are relative to the module directory, `formidable-salesforce/`.
 
 | Piece | Where | Purpose |
 | --- | --- | --- |
@@ -77,7 +79,7 @@ Content Editor (jContent, React 18)                  Formidable submission pipel
 
 ## Prerequisites
 
-- Jahia 8.2.3.0+ (the bundle requires it for its accounts family), `formidable-engine` 0.6 and `formidable-elements`, `graphql-dxm-provider`
+- Jahia 8.2.2.0+, `formidable-engine` 0.6 and `formidable-elements`, `graphql-dxm-provider` (nothing of the other action modules)
 - A Salesforce org with API access and a Connected App (below)
 - Build: Java 17, Maven 3, Node 22, Yarn 4 (see `mise.toml`)
 
@@ -131,9 +133,9 @@ describeCacheTtlSeconds=300
 | --- | --- | --- |
 | `connectionId` | file suffix | Stable id stored on action nodes |
 | `label` | id | Shown to contributors |
-| `instanceUrl` | — | `https` on `salesforce.com` / `force.com` / `salesforce-sites.com` only |
-| `clientId`, `username` | — | Connected App consumer key, integration user |
-| `privateKey` / `privateKeyPath` | — | PKCS#8 only; PKCS#1 (`BEGIN RSA PRIVATE KEY`) is rejected with a conversion hint |
+| `instanceUrl` | - | `https` on `salesforce.com` / `force.com` / `salesforce-sites.com` only |
+| `clientId`, `username` | - | Connected App consumer key, integration user |
+| `privateKey` / `privateKeyPath` | - | PKCS#8 only; PKCS#1 (`BEGIN RSA PRIVATE KEY`) is rejected with a conversion hint |
 | `apiVersion` | `v62.0` | `vNN.0` |
 | `allowInsecureDevUrl` | `false` | Development only: plain `http` on `localhost` / `host.docker.internal` (mock server) |
 
@@ -150,7 +152,7 @@ connection from the GraphQL playground as an editor of the path:
 
 ## Authoring the action
 
-1. Enable the `formidable-extended-actions` module on the site (jContent only offers content types of
+1. Enable the `formidable-salesforce` module on the site (jContent only offers content types of
    modules enabled on the current site).
 2. Open the form in jContent, go to its **actions** list and add **Create Salesforce Lead**.
 3. Pick the **Salesforce connection**.
@@ -223,14 +225,15 @@ read-only maintenance mode.
 
 ## Build, deploy, test
 
-The family is part of the bundle: from the repository root, `mvn clean install` (JDK 17, Node 22, Yarn 4) runs the Java
-tests and the front-end (yarn lint, tsc, vitest, vite) and writes `target/formidable-extended-actions-0.1.0-SNAPSHOT.jar`.
+From the repository root, `mvn clean install` (JDK 17, Node 22, Yarn 4) builds the five modules; `mvn clean install -pl formidable-salesforce`
+builds this one alone: it runs the Java tests and the front-end (yarn lint, tsc, vitest, vite) and writes
+`formidable-salesforce/target/formidable-salesforce-0.1.0-SNAPSHOT.jar`.
 The group id is `org.jahia.community.modules`: the jar needs no signature on Jahia Enterprise. Install it through the module
 manager or the provisioning API, then enable the module on the site.
 
 Tests:
 
-- Unit tests (JUnit 5): value coercion, mapping parsing, URL allowlist, error parsing —
+- Unit tests (JUnit 5): value coercion, mapping parsing, URL allowlist, error parsing -
   `mvn test`.
 - End-to-end (Cypress, in `tests/`): `cypress/e2e/actions/80-salesforce-lead-action.cy.ts`
   (creation, coercion, upsert, error policies, required fields) and

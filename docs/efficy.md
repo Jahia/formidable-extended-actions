@@ -1,6 +1,6 @@
-# Efficy connector (family `efficy` of formidable-extended-actions)
+# Efficy connector (module `formidable-efficy`)
 
-A family of the `formidable-extended-actions` bundle (Java package `org.jahia.modules.formidable.efficy`) that sends form submissions to **Efficy e-deal as Opportunities**.
+The module `formidable-efficy` (Java package `org.jahia.modules.formidable.efficy`) that sends form submissions to **Efficy e-deal as Opportunities**.
 
 A contributor adds the **Create Efficy Opportunity** action to any form, picks an Efficy connection
 and maps the Opportunity fields to form fields, constants, the submission date, or the Efficy person
@@ -15,7 +15,7 @@ error policies. Only the CRM layer differs.
 
 Part of the CRM connector family with the two other families: see
 [crm-connectors.md](./crm-connectors.md) for the shared architecture and
-the side-by-side comparison, and the [CHANGELOG](../CHANGELOG.md) of the bundle.
+the side-by-side comparison, and the [CHANGELOG](../CHANGELOG.md).
 
 ## Contents
 
@@ -33,6 +33,8 @@ the side-by-side comparison, and the [CHANGELOG](../CHANGELOG.md) of the bundle.
 - [Limitations and roadmap](#limitations-and-roadmap)
 
 ## What you get
+
+Paths are relative to the module directory, `formidable-efficy/`.
 
 | Piece | Where | Purpose |
 | --- | --- | --- |
@@ -86,7 +88,7 @@ Content Editor (jContent, React 18)                  Formidable submission pipel
 
 ## Prerequisites
 
-- Jahia 8.2.3.0+ (the bundle requires it for its accounts family), `formidable-engine` 0.6 and `formidable-elements`, `graphql-dxm-provider`
+- Jahia 8.2.2.0+, `formidable-engine` 0.6 and `formidable-elements`, `graphql-dxm-provider` (nothing of the other action modules)
 - An Efficy e-deal tenant (server URL, application context) and an API token allowed to read
   `Person`, read referentials and create the target entity
 - Build: Java 17, Maven 3, Node 22+, Yarn 4
@@ -121,12 +123,12 @@ referentialCacheTtlSeconds=300
 
 | Key | Default | Notes |
 | --- | --- | --- |
-| `serverUrl` | — | `https` on `efficy.com`, `efficy.cloud`, `efficytest.cloud` or an `extraAllowedHosts` suffix |
-| `appContext` | — | First path segment of the tenant (e.g. `AcmeCRM`) |
-| `token` / `tokenPath` | — | Sent verbatim in `Authorization` |
+| `serverUrl` | - | `https` on `efficy.com`, `efficy.cloud`, `efficytest.cloud` or an `extraAllowedHosts` suffix |
+| `appContext` | - | First path segment of the tenant (e.g. `AcmeCRM`) |
+| `token` / `tokenPath` | - | Sent verbatim in `Authorization` |
 | `objectType` | `Opportunity` | e-deal entity to create |
 | `fieldCatalog` | standard Opportunity fields | `sqlName|Label|type[|required]`; types `string`, `text`, `number`, `date`, `datetime`, `boolean`, `referential`, `referential-multi`, `reference` |
-| `defaultPersonId`, `defaultEnterpriseId` | — | Used when the person lookup finds nobody / the enterprise is not mapped |
+| `defaultPersonId`, `defaultEnterpriseId` | - | Used when the person lookup finds nobody / the enterprise is not mapped |
 | `allowInsecureDevUrl` | `false` | Development only: plain `http` on `localhost` / `host.docker.internal` (mock) |
 
 Default catalog: `OppTitle`*, `OppDetail`, `OppEntID`* (reference), `OppPerID`* (reference),
@@ -145,7 +147,7 @@ Verify a connection from the GraphQL playground as an editor of the path:
 
 ## Authoring the action
 
-1. Enable the `formidable-extended-actions` module on the site.
+1. Enable the `formidable-efficy` module on the site.
 2. Open the form in jContent, go to its **actions** list and add **Create Efficy Opportunity**.
 3. Pick the **Efficy connection**.
 4. In **Opportunity field mapping** add rows: an Efficy field on the left (required fields first,
@@ -214,15 +216,16 @@ The action is `fmdbmix:readOnlyCompatibleAction`.
 
 ## Build, deploy, test
 
-The family is part of the bundle: from the repository root, `mvn clean install` (JDK 17, Node 22, Yarn 4) runs the Java
-tests and the front-end (yarn lint, tsc, vitest, vite) and writes `target/formidable-extended-actions-0.1.0-SNAPSHOT.jar`.
+From the repository root, `mvn clean install` (JDK 17, Node 22, Yarn 4) builds the five modules; `mvn clean install -pl formidable-efficy`
+builds this one alone: it runs the Java tests and the front-end (yarn lint, tsc, vitest, vite) and writes
+`formidable-efficy/target/formidable-efficy-0.1.0-SNAPSHOT.jar`.
 The group id is `org.jahia.community.modules`: the jar needs no signature on Jahia Enterprise. Install it through the module
 manager or the provisioning API, then enable the module on the site.
 
 Tests:
 
 - Unit tests (JUnit 5): value coercion, mapping parsing, URL allowlist, error envelope and catalog
-  parsing — `mvn test`.
+  parsing - `mvn test`.
 - End-to-end (Cypress, in `tests/`): `cypress/e2e/actions/84-efficy-opportunity-action.cy.ts`
   (creation with person lookup and submission date, defaults fallback, error policies, required
   fields) and `85-efficy-opportunity-mapping-selector.cy.ts` (Content Editor selector). They need

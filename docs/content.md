@@ -1,6 +1,6 @@
-# Create content from a form (content family)
+# Create content from a form (module `formidable-content`)
 
-The content family of `formidable-extended-actions` adds one form action: **Create content** (`fmdbcnt:createContentAction`). A **signed-in** user
+The module `formidable-content` adds one form action: **Create content** (`fmdbcnt:createContentAction`). A **signed-in** user
 fills in a Formidable form; the action turns the submission into a content node of a type you choose (the form's fields fill its
 properties), stores the uploaded files as files that the content references, and publishes both, in a folder that **the user's
 own group** is entitled to.
@@ -23,7 +23,7 @@ endpoint of its own (the form is submitted through the engine's endpoint). Java 
 
 ## Before you start (administrator)
 
-1. Deploy the engine, then `formidable-extended-actions`; enable `formidable-extended-actions` on the site.
+1. Deploy the engine, then `formidable-content` (nothing of the other action modules is needed); enable `formidable-content` on the site.
 2. Create the **folders**. With the group mechanism below, that is one folder tree for the content and one for the files, and
    **one subfolder per company** in each. Create the subfolders yourself, with their ACLs: the action never creates a folder,
    because their access rights are your decision, not the form's.
@@ -238,5 +238,6 @@ org.jahia.modules.formidable.content
   messages/     VisitorText (what a visitor can read, EN, FR, PT)
 ```
 
-The editor labels of the action are in the module bundle (`formidable-extended-actions*.properties`); the sentences a visitor
-reads are in `formidable-extended-actions-content*.properties`.
+The editor labels of the action and the sentences a visitor reads are in the one bundle of the module
+(`formidable-content{,_fr,_pt}.properties`); the Content Editor selector (`ContentMapping`) is the UI extension of the module,
+in the i18n namespace `formidable-content`.

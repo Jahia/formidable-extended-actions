@@ -3,8 +3,8 @@
 ## 0.1.0 (unreleased)
 
 First release of `formidable-extended-actions`: the form actions that no longer live in the Formidable core repository
-(`Jahia/formidable`), gathered in one bundle. Node types, properties, PIDs, GraphQL fields and selector types are those of
-the separate modules; only the module id, the resource bundle and the UI extension namespace changed.
+(`Jahia/formidable`), gathered in one repository as five independent modules, one per action family. Node types, properties,
+PIDs, GraphQL fields, selector types and module ids are those of the separate modules.
 
 ### New features
 
@@ -34,10 +34,17 @@ the separate modules; only the module id, the resource bundle and the UI extensi
 
 ### Changes against the separate modules
 
-* One bundle, `formidable-extended-actions`, group `org.jahia.community.modules`: the `dev-unsigned` profile is gone.
-* The accounts guard checks that the site enabled `formidable-extended-actions` (it checked `formidable-accounts`).
-* One `definitions.cnd`, one UI extension (`src/javascript/init.tsx` registers the three CRM selector types) with the i18n
-  namespace `formidable-extended-actions`, one module resource bundle for every editor label. The visitor sentences of the
-  accounts and content families keep their own bundles (`formidable-extended-actions-accounts`,
-  `formidable-extended-actions-content`): both define the same `visitor.*` keys.
-* Compiled against Jahia 8.2.3.2 and `Jahia-Required-Version: 8.2.3.0` for the whole bundle (the sign-in needs it).
+* **Five independent modules**, not one bundle: `formidable-accounts`, `formidable-content`, `formidable-salesforce`,
+  `formidable-hubspot`, `formidable-efficy` (group `org.jahia.community.modules`; the `dev-unsigned` profile is gone). A Jahia
+  installs only the families it uses. The root `formidable-extended-actions` is the aggregator pom and the Yarn workspace root;
+  no jar of that name is built.
+* Module ids, resource bundles (`resources/<module id>{,_fr,_pt}.properties`, labels and visitor sentences together) and UI
+  extension i18n namespaces are those of the separate modules: the accounts guard checks that the site enabled
+  `formidable-accounts`, the selectors read the namespaces `formidable-salesforce`, `formidable-hubspot`, `formidable-efficy`
+  and `formidable-content`.
+* One `definitions.cnd` per module (its namespaces declared once, only its types) and one UI extension per module that has a
+  selector (content, salesforce, hubspot, efficy), each registering only its own selector types.
+* `Jahia-Required-Version` is per module: 8.2.3.0 for `formidable-accounts` (the sign-in needs `AuthenticationService`, so
+  it is compiled against Jahia 8.2.3.2), 8.2.2.0 for the others. `Jahia-Depends` is what each family needs: `graphql-dxm-provider`
+  only on the three CRMs.
+* `scripts/check-editor-forms.mjs` checks the forms of every module against that module's own `definitions.cnd`.

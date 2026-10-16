@@ -1,6 +1,6 @@
-# Create accounts and sign in from a form (accounts family)
+# Create accounts and sign in from a form (module `formidable-accounts`)
 
-The accounts family of `formidable-extended-actions` adds two form actions: **Create account** (`fmdbacc:createAccountAction`) and
+The module `formidable-accounts` adds two form actions: **Create account** (`fmdbacc:createAccountAction`) and
 **Sign in** (`fmdbacc:signInAction`). A visitor registers, or signs in, from a Formidable form; the sign-in is a real Jahia
 login, so the platform's login event fires and, with jExperience, the visitor's anonymous profile is merged into the user's.
 
@@ -20,8 +20,8 @@ release), `formidable-engine` 0.6, and `formidable-extended-inputs` for the pass
 
 ## Before you start (administrator)
 
-1. Deploy, in this order, the engine, `formidable-extended-inputs`, then `formidable-extended-actions`; enable
-   `formidable-extended-actions` and `formidable-extended-inputs` on the site.
+1. Deploy, in this order, the engine, `formidable-extended-inputs`, then `formidable-accounts` (it needs Jahia 8.2.3.0 or later,
+   and nothing of the other action modules); enable `formidable-accounts` and `formidable-extended-inputs` on the site.
 2. **Configure a CAPTCHA** ([CAPTCHA server-side validation](https://github.com/Jahia/formidable/blob/main/docs/administration/captcha-server-side-validation.md)). Both actions refuse to run on a
    form without the CAPTCHA option: a public sign-up or sign-in form without one is an open door for bots. On a local
    development instance only, `requireCaptcha=false` in `org.jahia.modules.formidable.accounts.cfg` lifts the rule.
@@ -162,7 +162,7 @@ scanner that opens it consumes the token, and the visitor then simply signs in w
 
 | Symptom | Cause | Fix |
 |---|---|---|
-| The visitor reads "This form is temporarily unavailable" | The form has no CAPTCHA option, the site did not enable `formidable-extended-actions`, the action was last saved by someone without `formidableAccountsActions`, a field of the action is not chosen, the password field is not a *Password* input, or activation is on and Jahia's mail service is off or `publicBaseUrl` is not set | The server log says which (`[formidable-accounts]`), with the form's or the action's path |
+| The visitor reads "This form is temporarily unavailable" | The form has no CAPTCHA option, the site did not enable `formidable-accounts`, the action was last saved by someone without `formidableAccountsActions`, a field of the action is not chosen, the password field is not a *Password* input, or activation is on and Jahia's mail service is off or `publicBaseUrl` is not set | The server log says which (`[formidable-accounts]`), with the form's or the action's path |
 | The **Group** list of the action is empty | `allowedGroups` is empty, or none of its names exists globally or on this site | Ask the administrator to list the group in `org.jahia.modules.formidable.accounts.cfg` |
 | Sign-ups fail with the generic sentence and the log says `GROUP` | The action's group is no longer in `allowedGroups`, no longer exists, or now gives back-office access | Pick another group, or fix the configuration |
 | A staff member cannot sign in through the form | Back-office accounts never sign in through a form | Use the platform's login page |

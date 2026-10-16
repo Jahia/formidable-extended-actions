@@ -1,6 +1,6 @@
 # Documentation of formidable-extended-actions
 
-One page per family. The bundle itself (requirements, build, layout) is described in the [README](../README.md); release notes
+One page per family (one module each). The repository (requirements, build, layout) is described in the [README](../README.md); release notes
 are in the [CHANGELOG](../CHANGELOG.md). Generic Formidable documentation (form pipeline, sensitive fields, error codes, the
 form action SPI) stays in the [Formidable repository](https://github.com/Jahia/formidable/tree/main/docs).
 
@@ -15,13 +15,22 @@ form action SPI) stays in the [Formidable repository](https://github.com/Jahia/f
 
 Test material (Cypress specs and mock CRM servers, not wired yet): [../tests/README.md](../tests/README.md).
 
-## Module id, resource bundles, namespace
+## Module ids, resource bundles, namespaces
+
+Each family is a module of its own: enable on a site only the ones it uses.
+
+| Family | Module id (enable it on the site) | Resource bundle (editor labels, tooltips, visitor sentences) | UI extension i18n namespace and keys |
+|---|---|---|---|
+| Accounts | `formidable-accounts` | `formidable-accounts{,_fr,_pt}.properties` | no UI extension |
+| Content | `formidable-content` | `formidable-content{,_fr,_pt}.properties` | `formidable-content`: `contentMapping` |
+| Salesforce | `formidable-salesforce` | `formidable-salesforce{,_fr}.properties` | `formidable-salesforce`: `leadMapping` |
+| HubSpot | `formidable-hubspot` | `formidable-hubspot{,_fr}.properties` | `formidable-hubspot`: `contactMapping` |
+| Efficy | `formidable-efficy` | `formidable-efficy{,_fr}.properties` | `formidable-efficy`: `opportunityMapping` |
+
+Bundles are under `formidable-<name>/src/main/resources/resources/`, locale files (`en.json`, `fr.json`) under
+`formidable-<name>/src/main/resources/javascript/locales/`.
 
 | What | Value |
 |---|---|
-| Module id (enable it on the site) | `formidable-extended-actions` |
-| Editor labels and tooltips (CND) | `src/main/resources/resources/formidable-extended-actions{,_fr,_pt}.properties` |
-| What a visitor reads, accounts / content | `formidable-extended-actions-accounts*.properties`, `formidable-extended-actions-content*.properties` |
-| UI extension i18n namespace | `formidable-extended-actions` (`javascript/locales/{en,fr}.json`: `leadMapping`, `contactMapping`, `opportunityMapping`) |
-| Accounts activation link | `/modules/formidable-accounts/verify?t=...` (the servlet alias is unchanged from the separate module) |
-| OSGi PIDs | unchanged: `org.jahia.modules.formidable.accounts`, `...salesforce-<id>`, `...hubspot-<id>`, `...efficy-<id>` |
+| Accounts activation link | `/modules/formidable-accounts/verify?t=...` |
+| OSGi PIDs | `org.jahia.modules.formidable.accounts`, `...salesforce-<id>`, `...hubspot-<id>`, `...efficy-<id>` |

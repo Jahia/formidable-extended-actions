@@ -1,6 +1,6 @@
-# HubSpot connector (family `hubspot` of formidable-extended-actions)
+# HubSpot connector (module `formidable-hubspot`)
 
-A family of the `formidable-extended-actions` bundle (Java package `org.jahia.modules.formidable.hubspot`) that sends form submissions to **HubSpot as Contacts**.
+The module `formidable-hubspot` (Java package `org.jahia.modules.formidable.hubspot`) that sends form submissions to **HubSpot as Contacts**.
 
 A contributor adds the **Create HubSpot Contact** action to any form, picks a HubSpot connection
 and maps the contact properties to the form fields (or to constants) directly in Content Editor.
@@ -13,7 +13,7 @@ architecture, same selector, same error policies. Only the CRM layer differs.
 
 Part of the CRM connector family with the two other families: see
 [crm-connectors.md](./crm-connectors.md) for the shared architecture and
-the side-by-side comparison, and the [CHANGELOG](../CHANGELOG.md) of the bundle.
+the side-by-side comparison, and the [CHANGELOG](../CHANGELOG.md).
 
 ## Contents
 
@@ -32,6 +32,8 @@ the side-by-side comparison, and the [CHANGELOG](../CHANGELOG.md) of the bundle.
 - [Limitations and roadmap](#limitations-and-roadmap)
 
 ## What you get
+
+Paths are relative to the module directory, `formidable-hubspot/`.
 
 | Piece | Where | Purpose |
 | --- | --- | --- |
@@ -79,7 +81,7 @@ Content Editor (jContent, React 18)                  Formidable submission pipel
 
 ## Prerequisites
 
-- Jahia 8.2.3.0+ (the bundle requires it for its accounts family), `formidable-engine` 0.6 and `formidable-elements`, `graphql-dxm-provider`
+- Jahia 8.2.2.0+, `formidable-engine` 0.6 and `formidable-elements`, `graphql-dxm-provider` (nothing of the other action modules)
 - A HubSpot portal with a private app (below)
 - Build: Java 17, Maven 3, Node 22, Yarn 4 (see `mise.toml`)
 
@@ -117,8 +119,8 @@ propertiesCacheTtlSeconds=300
 | `connectionId` | file suffix | Stable id stored on action nodes |
 | `label` | id | Shown to contributors |
 | `apiBaseUrl` | `https://api.hubapi.com` | `https` on `hubapi.com` (or a subdomain) only |
-| `accessToken` / `accessTokenPath` | — | Private app token, inline or in a file |
-| `portalId` | — | Informational (label, logs) |
+| `accessToken` / `accessTokenPath` | - | Private app token, inline or in a file |
+| `portalId` | - | Informational (label, logs) |
 | `allowInsecureDevUrl` | `false` | Development only: plain `http` on `localhost` / `host.docker.internal` (mock server) |
 
 A misconfigured file is still listed, suffixed "(misconfigured)", with the reason in the log and
@@ -136,7 +138,7 @@ wrong or revoked, `MISSING_SCOPES` that the private app lacks a scope.
 
 ## Authoring the action
 
-1. Enable the `formidable-extended-actions` module on the site.
+1. Enable the `formidable-hubspot` module on the site.
 2. Open the form in jContent, go to its **actions** list and add **Create HubSpot Contact**.
 3. Pick the **HubSpot connection**.
 4. In **Contact property mapping** add rows: a HubSpot property on the left, a form field or a
@@ -221,15 +223,16 @@ The action is `fmdbmix:readOnlyCompatibleAction`.
 
 ## Build, deploy, test
 
-The family is part of the bundle: from the repository root, `mvn clean install` (JDK 17, Node 22, Yarn 4) runs the Java
-tests and the front-end (yarn lint, tsc, vitest, vite) and writes `target/formidable-extended-actions-0.1.0-SNAPSHOT.jar`.
+From the repository root, `mvn clean install` (JDK 17, Node 22, Yarn 4) builds the five modules; `mvn clean install -pl formidable-hubspot`
+builds this one alone: it runs the Java tests and the front-end (yarn lint, tsc, vitest, vite) and writes
+`formidable-hubspot/target/formidable-hubspot-0.1.0-SNAPSHOT.jar`.
 The group id is `org.jahia.community.modules`: the jar needs no signature on Jahia Enterprise. Install it through the module
 manager or the provisioning API, then enable the module on the site.
 
 Tests:
 
 - Unit tests (JUnit 5): value coercion, mapping parsing, URL allowlist, error and property
-  parsing — `mvn test`.
+  parsing - `mvn test`.
 - End-to-end (Cypress, in `tests/`): `cypress/e2e/actions/82-hubspot-contact-action.cy.ts`
   (creation, string coercion, upsert, 409 conflict, error policies) and
   `83-hubspot-contact-mapping-selector.cy.ts` (Content Editor selector). They need the mock

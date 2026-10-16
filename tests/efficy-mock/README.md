@@ -1,4 +1,4 @@
-# Mock Efficy e-deal for the Efficy family specs (formidable-extended-actions)
+# Mock Efficy e-deal for the Efficy family specs (formidable-extended-actions repository)
 
 `mock_efficy.py` (Python 3, standard library only) fakes the e-deal endpoints the "Create Efficy
 Opportunity" action uses under the application context `MockContext`: `POST

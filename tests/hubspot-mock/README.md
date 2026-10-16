@@ -1,4 +1,4 @@
-# Mock HubSpot for the HubSpot family specs (formidable-extended-actions)
+# Mock HubSpot for the HubSpot family specs (formidable-extended-actions repository)
 
 `mock_hubspot.py` (Python 3, standard library only) fakes the CRM v3 endpoints the "Create
 HubSpot Contact" action uses: `GET /crm/v3/properties/contacts`, `POST /crm/v3/objects/contacts`,

@@ -156,7 +156,7 @@ export const extractConnectionId = (props: SelectorProps): string => {
 };
 
 /**
- * The enclosing form: the fmdb:form ancestor of the edited node — or the node itself,
+ * The enclosing form: the fmdb:form ancestor of the edited node - or the node itself,
  * should the editor ever hand the form path directly.
  */
 export const findFormPath = (node?: GraphNode | null): string | undefined => {
@@ -358,7 +358,7 @@ const EXPECTED_KINDS: Record<string, FormValueKind[]> = {
 };
 
 /**
- * Whether the form field's value kind is at odds with the HubSpot property type — a
+ * Whether the form field's value kind is at odds with the HubSpot property type - a
  * hint only (HubSpot accepts "42" for a number; it rejects "hello"). Unknown kinds
  * (a field type without a semantic mixin) are never flagged.
  */

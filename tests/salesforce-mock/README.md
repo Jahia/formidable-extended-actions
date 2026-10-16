@@ -1,4 +1,4 @@
-# Mock Salesforce for the Salesforce family specs (formidable-extended-actions)
+# Mock Salesforce for the Salesforce family specs (formidable-extended-actions repository)
 
 `mock_salesforce.py` (Python 3, standard library only) fakes the parts of Salesforce the
 "Create Salesforce Lead" action uses: the JWT bearer token endpoint, `sobjects/Lead/describe`,

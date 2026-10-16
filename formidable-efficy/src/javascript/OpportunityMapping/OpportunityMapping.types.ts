@@ -6,7 +6,7 @@ export type MappingSource = 'field' | 'constant' | 'today' | 'personByEmail';
 
 /**
  * One line of the mapping table, as stored. This shape is the ONLY contract with the
- * Java side (fieldMapping property of fmdbeff:createOpportunityAction) — keep it exact.
+ * Java side (fieldMapping property of fmdbeff:createOpportunityAction) - keep it exact.
  * Unknown properties are kept verbatim on re-serialization so a document authored
  * against a newer module version round-trips unchanged.
  */

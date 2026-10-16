@@ -1,9 +1,9 @@
 import type {FormFieldOption, MappingDocument, MappingRow, MappingSource, MappingTarget, PropertyOption} from './ContentMapping.types';
 
 export const MAPPING_VERSION = 1;
-/** Formik keys of the sibling settings the mapping depends on. */
-export const CONTENT_TYPE_KEY = 'fmdbcnt:createContentAction_contentType';
-export const FILE_MIXIN_KEY = 'fmdbcnt:createContentAction_fileMixin';
+/** The sibling settings the mapping depends on, by property name. */
+export const CONTENT_TYPE_PROPERTY = 'contentType';
+export const FILE_MIXIN_PROPERTY = 'fileMixin';
 export const TITLE = 'jcr:title';
 
 const SOURCES: MappingSource[] = ['field', 'files', 'constant', 'submitter', 'organization', 'page'];
@@ -133,9 +133,15 @@ export const orphanRows = (rows: MappingRow[], contentProperties: PropertyOption
 /** One value per line in, the values out (blank lines dropped). */
 export const splitValues = (text: string): string[] => text.split(/\r?\n/).map(value => value.trim()).filter(value => value !== '');
 
-/** Reads a sibling setting of the edit form (Formik holds a string, or a one-element array for a choice list). */
-export const siblingValue = (values: Record<string, unknown> | undefined, key: string): string => {
-    const raw = values?.[key];
+/**
+ * Reads a sibling setting of the edit form by its property name. The Content Editor names a field after the fieldset
+ * that holds it, `<fieldset>_<property>`: `fmdbcnt:createContentAction_contentType` while the property stays in the type's
+ * own fieldset, `files_fileMixin` once a layout override moved it to the Files fieldset. So the key is found by its
+ * suffix, wherever the layout puts the field. Formik holds a string, or a one-element array for a choice list.
+ */
+export const siblingValue = (values: Record<string, unknown> | undefined, property: string): string => {
+    const key = Object.keys(values ?? {}).find(candidate => candidate === property || candidate.endsWith(`_${property}`));
+    const raw = key === undefined ? undefined : values?.[key];
     if (typeof raw === 'string') {
         return raw.trim();
     }

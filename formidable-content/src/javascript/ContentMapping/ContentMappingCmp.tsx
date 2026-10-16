@@ -4,8 +4,8 @@ import React, {useEffect, useMemo, useState} from 'react';
 import {useTranslation} from 'react-i18next';
 import {CURRENT_NODE_BY_PATH, FORM_FIELDS_BY_PATH, NODE_TYPE_PROPERTIES} from './graphql';
 import {
-    CONTENT_TYPE_KEY,
-    FILE_MIXIN_KEY,
+    CONTENT_TYPE_PROPERTY,
+    FILE_MIXIN_PROPERTY,
     fieldsFor,
     orphanRows,
     parseMapping,
@@ -155,8 +155,8 @@ export const ContentMappingCmp = (props: SelectorProps) => {
     const nodePath = currentNodePathOf(props);
     const language = languageOf(props);
     const workspace = workspaceOf(props);
-    const contentType = siblingValue(props.form?.values, CONTENT_TYPE_KEY);
-    const fileMixin = siblingValue(props.form?.values, FILE_MIXIN_KEY);
+    const contentType = siblingValue(props.form?.values, CONTENT_TYPE_PROPERTY);
+    const fileMixin = siblingValue(props.form?.values, FILE_MIXIN_PROPERTY);
 
     const [fields, setFields] = useState<FormFieldOption[]>([]);
     const [fieldsState, setFieldsState] = useState<'loading' | 'ready' | 'error'>('loading');

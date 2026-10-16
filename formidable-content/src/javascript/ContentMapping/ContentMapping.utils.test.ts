@@ -68,8 +68,11 @@ describe('the rows shown', () => {
 
     it('split one value per line and read a sibling setting whatever shape Formik keeps', () => {
         expect(splitValues('a\n\n b \r\nc')).toEqual(['a', 'b', 'c']);
-        expect(siblingValue({k: ' ctmd:submission '}, 'k')).toBe('ctmd:submission');
-        expect(siblingValue({k: ['ctmdmix:credited']}, 'k')).toBe('ctmdmix:credited');
-        expect(siblingValue(undefined, 'k')).toBe('');
+        // the Content Editor names a field <fieldset>_<property>: the type's own fieldset, or the one a layout moved it to
+        const values = {'fmdbcnt:createContentAction_contentType': ' ctmd:submission ', files_fileMixin: ['ctmdmix:credited'], files_filesFolder: 'x'};
+        expect(siblingValue(values, 'contentType')).toBe('ctmd:submission');
+        expect(siblingValue(values, 'fileMixin')).toBe('ctmdmix:credited');
+        expect(siblingValue(values, 'groupPrefix')).toBe('');
+        expect(siblingValue(undefined, 'contentType')).toBe('');
     });
 });

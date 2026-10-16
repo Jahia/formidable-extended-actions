@@ -6,14 +6,13 @@
         <groupId>org.jahia.modules</groupId>
         <version>8.2.2.0</version>
     </parent>
-    <!-- org.jahia.community.modules: an unsigned build starts on Jahia Enterprise (no Jahia-Signature needed), which is
-         what the dev-unsigned profile of the modules this one gathers used to relabel. -->
+    <!-- org.jahia.community.modules: an unsigned build starts on Jahia Enterprise (no Jahia-Signature needed). -->
     <groupId>org.jahia.community.modules</groupId>
     <artifactId>formidable-extended-actions</artifactId>
     <version>0.1.0-SNAPSHOT</version>
     <name>Formidable Extended Actions</name>
-    <packaging>bundle</packaging>
-    <description>Formidable Extended Actions - custom form actions for Formidable, shipped outside the core release: Create account and Sign in, Create content, and the Salesforce, HubSpot and Efficy CRM connectors</description>
+    <packaging>pom</packaging>
+    <description>Formidable Extended Actions - custom form actions for Formidable, shipped outside the core release as independent Jahia modules, one per action family: formidable-accounts (Create account, Sign in), formidable-content (Create content), formidable-salesforce, formidable-hubspot and formidable-efficy (the CRM connectors). Install only the families you use.</description>
     <licenses>
         <license>
             <name>GNU General Public License</name>
@@ -27,14 +26,20 @@
         </license>
     </licenses>
 
+    <!-- Five independent bundles: no module depends on another one, and none imports a package of another. -->
+    <modules>
+        <module>formidable-accounts</module>
+        <module>formidable-content</module>
+        <module>formidable-salesforce</module>
+        <module>formidable-hubspot</module>
+        <module>formidable-efficy</module>
+    </modules>
+
     <properties>
-        <!-- formidable-engine 0.6 (accounts) and the graphql-dxm-provider (the three CRM connectors) -->
-        <jahia-depends>default,formidable-engine=0.6,graphql-dxm-provider</jahia-depends>
-        <!-- Compiled against 8.2.3.2: the sign-in goes through org.jahia.services.security.AuthenticationService, an OSGi
-             service that exists from Jahia 8.2.3.0 (the 8.2.2.0 API has no such interface). The bundle declares
-             Jahia-Required-Version 8.2.3.0 below: the parent would otherwise write ${jahia.version}. -->
-        <jahia.server.version>8.2.3.2</jahia.server.version>
-        <!-- The Formidable core this module extends (the SPI org.jahia.modules.formidable.engine.api, with the contextual
+        <!-- The Jahia API the families are compiled against, and so the Jahia-Required-Version they declare: the lowest the
+             code allows. formidable-accounts raises it (AuthenticationService is an OSGi service from 8.2.3.0). -->
+        <jahia.server.version>8.2.2.0</jahia.server.version>
+        <!-- The Formidable core these modules extend (the SPI org.jahia.modules.formidable.engine.api, with the contextual
              action extension point of Jahia/formidable#406). Install it first: mvn -pl formidable-engine -am install
              in a Formidable checkout. -->
         <formidable.engine.version>0.6.0-SNAPSHOT</formidable.engine.version>
@@ -76,261 +81,232 @@
         </repository>
     </repositories>
 
-    <dependencies>
-        <dependency>
-            <groupId>org.jahia.server</groupId>
-            <artifactId>jahia-impl</artifactId>
-            <version>${jahia.server.version}</version>
-            <scope>provided</scope>
-            <exclusions>
-                <exclusion>
-                    <groupId>*</groupId>
-                    <artifactId>*</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <!-- Formidable action SPI (org.jahia.modules.formidable.engine.api) -->
-        <dependency>
-            <groupId>org.jahia.modules</groupId>
-            <artifactId>formidable-engine</artifactId>
-            <version>${formidable.engine.version}</version>
-            <scope>provided</scope>
-        </dependency>
-        <!-- GraphQL extensions exposing the CRM metadata to the Content Editor selectors -->
-        <dependency>
-            <groupId>org.jahia.modules</groupId>
-            <artifactId>graphql-dxm-provider</artifactId>
-            <version>${graphql-dxm-provider.version}</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>io.github.graphql-java</groupId>
-            <artifactId>graphql-java-annotations</artifactId>
-            <version>${graphql-java-annotations.version}</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>javax.inject</groupId>
-            <artifactId>javax.inject</artifactId>
-            <version>${javax.inject.version}</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>javax.jcr</groupId>
-            <artifactId>jcr</artifactId>
-            <version>${javax.jcr.version}</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>javax.servlet</groupId>
-            <artifactId>javax.servlet-api</artifactId>
-            <version>${javax.servlet.api.version}</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-            <version>${slf4j.version}</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.osgi</groupId>
-            <artifactId>osgi.cmpn</artifactId>
-            <version>${osgi.version}</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.osgi</groupId>
-            <artifactId>osgi.annotation</artifactId>
-            <version>${osgi.annotation.version}</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.json</groupId>
-            <artifactId>json</artifactId>
-            <version>${json.version}</version>
-            <scope>provided</scope>
-        </dependency>
-        <!-- Jahia's MailService signature reaches javax.mail: needed to load (and mock) the class (accounts) -->
-        <dependency>
-            <groupId>com.sun.mail</groupId>
-            <artifactId>javax.mail</artifactId>
-            <version>${javax.mail.version}</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>javax.activation</groupId>
-            <artifactId>activation</artifactId>
-            <version>${activation.version}</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-context-support</artifactId>
-            <version>${spring.context.support.version}</version>
-            <scope>provided</scope>
-        </dependency>
-        <!-- jahia-impl's own dependencies, excluded above: the node, session, user and group wrappers the tests mock reach them
-             (the user and group decorators extend a Guava type) -->
-        <dependency>
-            <groupId>commons-lang</groupId>
-            <artifactId>commons-lang</artifactId>
-            <version>${commons.lang.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.jackrabbit</groupId>
-            <artifactId>jackrabbit-api</artifactId>
-            <version>${jackrabbit.api.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.google.guava</groupId>
-            <artifactId>guava</artifactId>
-            <version>${guava.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter-api</artifactId>
-            <version>${junit.jupiter.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter-engine</artifactId>
-            <version>${junit.jupiter.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.mockito</groupId>
-            <artifactId>mockito-core</artifactId>
-            <version>${mockito.version}</version>
-            <scope>test</scope>
-        </dependency>
-    </dependencies>
+    <!-- The versions of everything a module may declare: a module pom lists the artifacts it uses and no version. -->
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.jahia.server</groupId>
+                <artifactId>jahia-impl</artifactId>
+                <version>${jahia.server.version}</version>
+                <scope>provided</scope>
+                <exclusions>
+                    <exclusion>
+                        <groupId>*</groupId>
+                        <artifactId>*</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+            <!-- Formidable action SPI (org.jahia.modules.formidable.engine.api) -->
+            <dependency>
+                <groupId>org.jahia.modules</groupId>
+                <artifactId>formidable-engine</artifactId>
+                <version>${formidable.engine.version}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.jahia.modules</groupId>
+                <artifactId>graphql-dxm-provider</artifactId>
+                <version>${graphql-dxm-provider.version}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>io.github.graphql-java</groupId>
+                <artifactId>graphql-java-annotations</artifactId>
+                <version>${graphql-java-annotations.version}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>javax.inject</groupId>
+                <artifactId>javax.inject</artifactId>
+                <version>${javax.inject.version}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>javax.jcr</groupId>
+                <artifactId>jcr</artifactId>
+                <version>${javax.jcr.version}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>javax.servlet</groupId>
+                <artifactId>javax.servlet-api</artifactId>
+                <version>${javax.servlet.api.version}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-api</artifactId>
+                <version>${slf4j.version}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.osgi</groupId>
+                <artifactId>osgi.cmpn</artifactId>
+                <version>${osgi.version}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.osgi</groupId>
+                <artifactId>osgi.annotation</artifactId>
+                <version>${osgi.annotation.version}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.json</groupId>
+                <artifactId>json</artifactId>
+                <version>${json.version}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>com.sun.mail</groupId>
+                <artifactId>javax.mail</artifactId>
+                <version>${javax.mail.version}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>javax.activation</groupId>
+                <artifactId>activation</artifactId>
+                <version>${activation.version}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring-context-support</artifactId>
+                <version>${spring.context.support.version}</version>
+                <scope>provided</scope>
+            </dependency>
+            <!-- jahia-impl's own dependencies, excluded above: the node, session, user and group wrappers the tests mock
+                 reach them (the user and group decorators extend a Guava type) -->
+            <dependency>
+                <groupId>commons-lang</groupId>
+                <artifactId>commons-lang</artifactId>
+                <version>${commons.lang.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.jackrabbit</groupId>
+                <artifactId>jackrabbit-api</artifactId>
+                <version>${jackrabbit.api.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>com.google.guava</groupId>
+                <artifactId>guava</artifactId>
+                <version>${guava.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.junit.jupiter</groupId>
+                <artifactId>junit-jupiter-api</artifactId>
+                <version>${junit.jupiter.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.junit.jupiter</groupId>
+                <artifactId>junit-jupiter-engine</artifactId>
+                <version>${junit.jupiter.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.mockito</groupId>
+                <artifactId>mockito-core</artifactId>
+                <version>${mockito.version}</version>
+                <scope>test</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 
     <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.felix</groupId>
+                    <artifactId>maven-bundle-plugin</artifactId>
+                    <configuration>
+                        <instructions>
+                            <_dsannotations>*</_dsannotations>
+                        </instructions>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <configuration>
+                        <release>17</release>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-clean-plugin</artifactId>
+                    <version>${maven-clean-plugin.version}</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.codehaus.mojo</groupId>
+                    <artifactId>exec-maven-plugin</artifactId>
+                    <version>${exec-maven-plugin.version}</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-dependency-plugin</artifactId>
+                    <version>${maven-dependency-plugin.version}</version>
+                    <configuration>
+                        <failOnWarning>true</failOnWarning>
+                        <ignoredUnusedDeclaredDependencies>
+                            <ignoredUnusedDeclaredDependency>com.google.guava:guava</ignoredUnusedDeclaredDependency>
+                            <ignoredUnusedDeclaredDependency>commons-lang:commons-lang</ignoredUnusedDeclaredDependency>
+                            <ignoredUnusedDeclaredDependency>org.apache.jackrabbit:jackrabbit-api</ignoredUnusedDeclaredDependency>
+                            <ignoredUnusedDeclaredDependency>com.sun.mail:javax.mail</ignoredUnusedDeclaredDependency>
+                            <ignoredUnusedDeclaredDependency>javax.activation:activation</ignoredUnusedDeclaredDependency>
+                            <ignoredUnusedDeclaredDependency>org.springframework:spring-context-support</ignoredUnusedDeclaredDependency>
+                            <ignoredUnusedDeclaredDependency>javax.jcr:jcr</ignoredUnusedDeclaredDependency>
+                            <ignoredUnusedDeclaredDependency>org.osgi:osgi.annotation</ignoredUnusedDeclaredDependency>
+                            <ignoredUnusedDeclaredDependency>org.junit.jupiter:junit-jupiter-api</ignoredUnusedDeclaredDependency>
+                            <ignoredUnusedDeclaredDependency>org.junit.jupiter:junit-jupiter-engine</ignoredUnusedDeclaredDependency>
+                            <ignoredUnusedDeclaredDependency>org.mockito:mockito-core</ignoredUnusedDeclaredDependency>
+                            <ignoredUnusedDeclaredDependency>org.springframework:spring-webmvc</ignoredUnusedDeclaredDependency>
+                            <ignoredUnusedDeclaredDependency>javax.servlet:jstl</ignoredUnusedDeclaredDependency>
+                            <ignoredUnusedDeclaredDependency>org.jahia.server:jahia-taglib</ignoredUnusedDeclaredDependency>
+                        </ignoredUnusedDeclaredDependencies>
+                    </configuration>
+                </plugin>
+            </plugins>
+        </pluginManagement>
         <plugins>
-            <plugin>
-                <groupId>org.apache.felix</groupId>
-                <artifactId>maven-bundle-plugin</artifactId>
-                <extensions>true</extensions>
-                <configuration>
-                    <instructions>
-                        <_dsannotations>*</_dsannotations>
-                        <!-- The parent writes ${jahia.version} (8.2.2.0): AuthenticationService is an OSGi service from 8.2.3.0 -->
-                        <Jahia-Required-Version>8.2.3.0</Jahia-Required-Version>
-                        <Import-Package>
-                            org.jahia.modules.formidable.engine.api,
-                            org.jahia.modules.graphql.provider.dxm,
-                            org.jahia.modules.graphql.provider.dxm.osgi.annotations,
-                            graphql.annotations.annotationTypes,
-                            org.json,
-                            javax.security.auth.login,
-                            *
-                        </Import-Package>
-                    </instructions>
-                </configuration>
-            </plugin>
-            <plugin>
-                <artifactId>maven-clean-plugin</artifactId>
-                <version>${maven-clean-plugin.version}</version>
-                <configuration>
-                    <filesets>
-                        <!-- the generated federation bundle: gitignored, rebuilt by yarn build -->
-                        <fileset>
-                            <directory>${project.basedir}/src/main/resources/javascript/apps/</directory>
-                            <includes>
-                                <include>*</include>
-                            </includes>
-                        </fileset>
-                    </filesets>
-                </configuration>
-            </plugin>
-            <!-- The UI extension (the three CRM mapping selectors), built by Yarn 4 on Node 22 from the PATH:
-                 yarn install, then lint, then tsc + vitest + vite build into src/main/resources/javascript/apps/ -->
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>exec-maven-plugin</artifactId>
-                <version>${exec-maven-plugin.version}</version>
-                <executions>
-                    <execution>
-                        <id>yarn install - Formidable Extended Actions</id>
-                        <phase>initialize</phase>
-                        <goals>
-                            <goal>exec</goal>
-                        </goals>
-                        <configuration>
-                            <executable>yarn</executable>
-                            <arguments>
-                                <argument>install</argument>
-                            </arguments>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>yarn lint - Formidable Extended Actions</id>
-                        <phase>process-sources</phase>
-                        <goals>
-                            <goal>exec</goal>
-                        </goals>
-                        <configuration>
-                            <executable>yarn</executable>
-                            <arguments>
-                                <argument>lint</argument>
-                            </arguments>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>yarn build - Formidable Extended Actions</id>
-                        <phase>generate-resources</phase>
-                        <goals>
-                            <goal>exec</goal>
-                        </goals>
-                        <configuration>
-                            <executable>yarn</executable>
-                            <arguments>
-                                <argument>build</argument>
-                            </arguments>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
+            <!-- Every module: Java 17, and the dependency analysis (an undeclared or an unused dependency fails the build) -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <configuration>
-                    <release>17</release>
-                </configuration>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-dependency-plugin</artifactId>
-                <version>${maven-dependency-plugin.version}</version>
-                <configuration>
-                    <failOnWarning>true</failOnWarning>
-                    <ignoredUnusedDeclaredDependencies>
-                        <ignoredUnusedDeclaredDependency>com.google.guava:guava</ignoredUnusedDeclaredDependency>
-                        <ignoredUnusedDeclaredDependency>commons-lang:commons-lang</ignoredUnusedDeclaredDependency>
-                        <ignoredUnusedDeclaredDependency>org.apache.jackrabbit:jackrabbit-api</ignoredUnusedDeclaredDependency>
-                        <ignoredUnusedDeclaredDependency>com.sun.mail:javax.mail</ignoredUnusedDeclaredDependency>
-                        <ignoredUnusedDeclaredDependency>javax.activation:activation</ignoredUnusedDeclaredDependency>
-                        <ignoredUnusedDeclaredDependency>org.springframework:spring-context-support</ignoredUnusedDeclaredDependency>
-                        <ignoredUnusedDeclaredDependency>javax.jcr:jcr</ignoredUnusedDeclaredDependency>
-                        <ignoredUnusedDeclaredDependency>org.osgi:osgi.annotation</ignoredUnusedDeclaredDependency>
-                        <ignoredUnusedDeclaredDependency>org.junit.jupiter:junit-jupiter-api</ignoredUnusedDeclaredDependency>
-                        <ignoredUnusedDeclaredDependency>org.junit.jupiter:junit-jupiter-engine</ignoredUnusedDeclaredDependency>
-                        <ignoredUnusedDeclaredDependency>org.mockito:mockito-core</ignoredUnusedDeclaredDependency>
-                        <ignoredUnusedDeclaredDependency>org.springframework:spring-webmvc</ignoredUnusedDeclaredDependency>
-                        <ignoredUnusedDeclaredDependency>javax.servlet:jstl</ignoredUnusedDeclaredDependency>
-                        <ignoredUnusedDeclaredDependency>org.jahia.server:jahia-taglib</ignoredUnusedDeclaredDependency>
-                    </ignoredUnusedDeclaredDependencies>
-                </configuration>
                 <executions>
                     <execution>
                         <goals>
                             <goal>analyze-only</goal>
                         </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <!-- Once per build, at the root: every module's Content Editor layouts against its own definitions.cnd
+                 (scripts/check-editor-forms.mjs, Node 22 on the PATH). Not inherited: the modules do not run it again. -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <inherited>false</inherited>
+                <executions>
+                    <execution>
+                        <id>check editor forms</id>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                        <configuration>
+                            <executable>node</executable>
+                            <arguments>
+                                <argument>scripts/check-editor-forms.mjs</argument>
+                            </arguments>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>

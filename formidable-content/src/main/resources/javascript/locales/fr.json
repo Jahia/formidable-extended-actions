@@ -1,0 +1,38 @@
+{
+    "contentMapping": {
+        "columns": {
+            "property": "Propriété",
+            "source": "Remplie par",
+            "value": "Valeur"
+        },
+        "sources": {
+            "none": "Non renseignée",
+            "field": "Un champ du formulaire",
+            "files": "Les fichiers d'un champ d'envoi",
+            "constant": "Une valeur fixe",
+            "submitter": "La personne qui envoie",
+            "organization": "Son organisation",
+            "page": "La page d'où le formulaire est envoyé"
+        },
+        "filled": {
+            "submitter": "Son identifiant, fourni par la plateforme",
+            "organization": "L'organisation de son compte",
+            "page": "Une référence à la page d'où le formulaire est envoyé"
+        },
+        "selectField": "Choisir un champ",
+        "selectFileField": "Choisir un champ d'envoi",
+        "missingField": "{{name}} (n'est plus dans le formulaire)",
+        "valuePlaceholder": "Valeur",
+        "valuesPlaceholder": "Une valeur par ligne",
+        "contentTitle": "Le contenu",
+        "filesTitle": "Les fichiers enregistrés",
+        "fileMixinHint": "Pour remplir des propriétés des fichiers (un crédit, par exemple), choisissez un mixin des fichiers dans Réglages de l'action, Fichiers.",
+        "chooseTypeFirst": "Choisissez d'abord le type de contenu : ses propriétés s'affichent ici.",
+        "formNotFound": "Les champs du formulaire n'ont pas pu être lus : enregistrez l'action dans un formulaire.",
+        "typeNotFound": "Le type {{type}} n'a pas pu être lu.",
+        "missingMandatory": "Propriétés obligatoires non renseignées : {{properties}}. Le contenu ne peut pas être créé sans elles.",
+        "fieldGone": "{{property}} lit le champ {{name}}, qui n'est plus dans le formulaire : les envois sont refusés tant qu'un autre champ n'est pas choisi.",
+        "orphans": "Ces lignes remplissent des propriétés que les types choisis n'ont pas ; retirez-les :",
+        "remove": "Retirer"
+    }
+}

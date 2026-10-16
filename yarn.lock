@@ -2103,9 +2103,103 @@ __metadata:
   languageName: node
   linkType: hard
 
+"formidable-content@workspace:formidable-content":
+  version: 0.0.0-use.local
+  resolution: "formidable-content@workspace:formidable-content"
+  dependencies:
+    "@apollo/client": "npm:3.14.0"
+    "@eslint-react/eslint-plugin": "npm:^2.3.13"
+    "@eslint/js": "npm:^9.39.2"
+    "@jahia/moonstone": "npm:2.16.2"
+    "@jahia/ui-extender": "npm:^1.2.0"
+    "@jahia/vite-federation-plugin": "npm:^0.1.1"
+    "@types/react": "npm:^18.3.28"
+    eslint: "npm:^9.39.2"
+    globals: "npm:^16.5.0"
+    graphql: "npm:^16.10.0"
+    graphql-tag: "npm:^2.12.6"
+    i18next: "npm:^20.6.1"
+    prop-types: "npm:^15.7.2"
+    react: "npm:^18.3.1"
+    react-dom: "npm:^18.3.1"
+    react-i18next: "npm:^11.2.2"
+    typescript: "npm:^5.9.3"
+    typescript-eslint: "npm:^8.50.0"
+    vite: "npm:7.3.5"
+    vitest: "npm:^3.2.4"
+  languageName: unknown
+  linkType: soft
+
+"formidable-efficy@workspace:formidable-efficy":
+  version: 0.0.0-use.local
+  resolution: "formidable-efficy@workspace:formidable-efficy"
+  dependencies:
+    "@apollo/client": "npm:3.14.0"
+    "@eslint-react/eslint-plugin": "npm:^2.3.13"
+    "@eslint/js": "npm:^9.39.2"
+    "@jahia/moonstone": "npm:2.16.2"
+    "@jahia/ui-extender": "npm:^1.2.0"
+    "@jahia/vite-federation-plugin": "npm:^0.1.1"
+    "@types/react": "npm:^18.3.28"
+    eslint: "npm:^9.39.2"
+    globals: "npm:^16.5.0"
+    graphql: "npm:^16.10.0"
+    graphql-tag: "npm:^2.12.6"
+    i18next: "npm:^20.6.1"
+    prop-types: "npm:^15.7.2"
+    react: "npm:^18.3.1"
+    react-dom: "npm:^18.3.1"
+    react-i18next: "npm:^11.2.2"
+    typescript: "npm:^5.9.3"
+    typescript-eslint: "npm:^8.50.0"
+    vite: "npm:7.3.5"
+    vitest: "npm:^3.2.4"
+  languageName: unknown
+  linkType: soft
+
 "formidable-extended-actions@workspace:.":
   version: 0.0.0-use.local
   resolution: "formidable-extended-actions@workspace:."
+  dependencies:
+    "@eslint-react/eslint-plugin": "npm:^2.3.13"
+    "@eslint/js": "npm:^9.39.2"
+    eslint: "npm:^9.39.2"
+    globals: "npm:^16.5.0"
+    typescript: "npm:^5.9.3"
+    typescript-eslint: "npm:^8.50.0"
+  languageName: unknown
+  linkType: soft
+
+"formidable-hubspot@workspace:formidable-hubspot":
+  version: 0.0.0-use.local
+  resolution: "formidable-hubspot@workspace:formidable-hubspot"
+  dependencies:
+    "@apollo/client": "npm:3.14.0"
+    "@eslint-react/eslint-plugin": "npm:^2.3.13"
+    "@eslint/js": "npm:^9.39.2"
+    "@jahia/moonstone": "npm:2.16.2"
+    "@jahia/ui-extender": "npm:^1.2.0"
+    "@jahia/vite-federation-plugin": "npm:^0.1.1"
+    "@types/react": "npm:^18.3.28"
+    eslint: "npm:^9.39.2"
+    globals: "npm:^16.5.0"
+    graphql: "npm:^16.10.0"
+    graphql-tag: "npm:^2.12.6"
+    i18next: "npm:^20.6.1"
+    prop-types: "npm:^15.7.2"
+    react: "npm:^18.3.1"
+    react-dom: "npm:^18.3.1"
+    react-i18next: "npm:^11.2.2"
+    typescript: "npm:^5.9.3"
+    typescript-eslint: "npm:^8.50.0"
+    vite: "npm:7.3.5"
+    vitest: "npm:^3.2.4"
+  languageName: unknown
+  linkType: soft
+
+"formidable-salesforce@workspace:formidable-salesforce":
+  version: 0.0.0-use.local
+  resolution: "formidable-salesforce@workspace:formidable-salesforce"
   dependencies:
     "@apollo/client": "npm:3.14.0"
     "@eslint-react/eslint-plugin": "npm:^2.3.13"

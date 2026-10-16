@@ -1,0 +1,28 @@
+<nt = 'http://www.jcp.org/jcr/nt/1.0'>
+<mix = 'http://www.jcp.org/jcr/mix/1.0'>
+<jnt = 'http://www.jahia.org/jahia/nt/1.0'>
+<fmdbmix = 'http://www.jahia.org/jahia/fmdb/mix/1.0'>
+<fmdbcnt = 'http://www.jahia.org/jahia/fmdbcnt/nt/1.0'>
+
+// Formidable Content: the "Create content" form action. A signed-in user's submission becomes a content node of a
+// chosen type (the form's fields fill its properties), the uploaded files become jnt:file nodes the content references,
+// and both are published. Everything is configured here, on the action node; nothing is configured in a file.
+// The action refuses guests, and writes only in a folder the submitter's own live session can read (the subfolder named
+// by their group). It carries no fmdbmix:readOnlyCompatibleAction: it writes.
+//
+// What fills what is ONE JSON document, `mapping`, written by the ContentMapping selector type of the Content Editor
+// (never typed by hand): {"version":1,"rows":[{"target":"content"|"file","property":"<name>","source":"field"|"files"|
+// "constant"|"submitter"|"organization"|"page", ...}]}. A field row names its form field by node id, field key and name
+// (a renamed field still resolves); a constant row carries "values". jcr:title from a field also names the node. The
+// companion-file rule stays a line of text: requiredPairs  dependentField<-field:mimePattern  e.g. captions<-media:video/*
+[fmdbcnt:createContentAction] > jnt:content, fmdbmix:formAction, mix:title
+ - jcr:title (string) = resourceBundle('fmdbcnt_createContentAction') autocreated i18n
+ - contentType (string, choicelist[formidableContentTypes]) mandatory indexed=no
+ - parentFolder (weakreference) mandatory
+ - mapping (string) indexed=no
+ - filesFolder (weakreference, picker[type='folder'])
+ - fileMixin (string, choicelist[formidableContentFileMixins]) indexed=no
+ - groupPrefix (string) indexed=no
+ - requiredPairs (string) multiple indexed=no
+ - pairRefusalMessage (string) i18n indexed=no
+ - publish (boolean) = true autocreated indexed=no

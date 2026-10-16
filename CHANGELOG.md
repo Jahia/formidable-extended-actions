@@ -3,7 +3,7 @@
 ## 0.1.0 (unreleased)
 
 First release of `formidable-extended-actions`: the form actions that no longer live in the Formidable core repository
-(`Jahia/formidable`), gathered in one repository as five independent modules, one per action family. Node types, properties,
+(`Jahia/formidable`), gathered in one repository as six independent modules, one per action family. Node types, properties,
 PIDs, GraphQL fields, selector types and module ids are those of the separate modules.
 
 ### New features
@@ -14,6 +14,10 @@ PIDs, GraphQL fields, selector types and module ids are those of the separate mo
   state).
 * **Content** - Create content (`fmdbcnt:createContentAction`): a signed-in submitter's form becomes a content node of a chosen
   type with its uploaded files, written in a folder their group is entitled to, then published. From Jahia/formidable#415.
+* **Redirect** - Redirect (`fmdbred:redirectAction`): once the submission is accepted, sends the visitor to a page of the site
+  (a weak reference, its URL built in the visitor's language) or a same-origin path; never another host. Proposed in
+  Jahia/formidable#432 as `fmdb:redirectAction`, which keeps only the mechanism (`FormActionResult.redirect`, `RedirectTargets`,
+  `PageLinks`, the island's navigation).
 * **Salesforce** - Create Salesforce Lead (`fmdbsfdc:createLeadAction`), the `SalesforceLeadMapping` selector and the
   `formidableSalesforce` GraphQL query. From the CRM connector branch of Jahia/formidable
   (`feature/crm-connector-actions`, commit 336c045).
@@ -34,7 +38,7 @@ PIDs, GraphQL fields, selector types and module ids are those of the separate mo
 
 ### Changes against the separate modules
 
-* **Five independent modules**, not one bundle: `formidable-accounts`, `formidable-content`, `formidable-salesforce`,
+* **Six independent modules**, not one bundle: `formidable-accounts`, `formidable-content`, `formidable-redirect`, `formidable-salesforce`,
   `formidable-hubspot`, `formidable-efficy` (group `org.jahia.community.modules`; the `dev-unsigned` profile is gone). A Jahia
   installs only the families it uses. The root `formidable-extended-actions` is the aggregator pom and the Yarn workspace root;
   no jar of that name is built.

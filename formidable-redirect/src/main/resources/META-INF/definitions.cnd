@@ -1,0 +1,16 @@
+<nt = 'http://www.jcp.org/jcr/nt/1.0'>
+<mix = 'http://www.jcp.org/jcr/mix/1.0'>
+<jnt = 'http://www.jahia.org/jahia/nt/1.0'>
+<fmdbmix = 'http://www.jahia.org/jahia/fmdb/mix/1.0'>
+<fmdbred = 'http://www.jahia.org/jahia/fmdbred/nt/1.0'>
+
+// Formidable Redirect: sends the visitor to another page of the site once the submission is accepted.
+// The target is a page of the site (page, a weak reference: it follows a move or a rename) or a same-origin relative
+// path (path): never another host. The page is resolved in live, in the submission's language. The engine does the
+// rest (formidable-engine 0.6, docs/architecture/redirect-action.md of the Formidable repository): the servlet names
+// the target in the response, the form island navigates. Writes nothing, so the action is read-only compatible.
+[fmdbred:redirectAction] > jnt:content, fmdbmix:formAction, fmdbmix:readOnlyCompatibleAction, mix:title
+ - jcr:title (string) = resourceBundle('fmdbred_redirectAction') autocreated i18n
+ - targetType (string, choicelist[resourceBundle]) = 'page' autocreated indexed=no < 'page', 'path'
+ - page (weakreference, picker[type='page'])
+ - path (string) i18n indexed=no

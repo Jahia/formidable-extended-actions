@@ -1,13 +1,14 @@
 # formidable-extended-actions
 
 Custom form actions for [Formidable](https://github.com/Jahia/formidable), shipped **outside the Formidable core release** as
-a monorepo of **five independent Jahia modules**, one per action family. A Jahia installs only the families it uses: no
-Efficy module on a Jahia that has no Efficy. The five families used to be modules of the core repository (`Jahia/formidable`).
+a monorepo of **six independent Jahia modules**, one per action family. A Jahia installs only the families it uses: no
+Efficy module on a Jahia that has no Efficy. Five of the families used to be modules of the core repository (`Jahia/formidable`); the Redirect action was proposed there and ships here, the core keeping only the mechanism it uses.
 
 | Module (id = artifactId) | Form action(s) | Node types | Java package | Needs | Guide |
 |---|---|---|---|---|---|
 | `formidable-accounts` | Create account, Sign in | `fmdbacc:createAccountAction`, `fmdbacc:signInAction` | `org.jahia.modules.formidable.accounts` | Jahia 8.2.3.0+, `formidable-engine=0.6` | [docs/accounts.md](docs/accounts.md) |
 | `formidable-content` | Create content | `fmdbcnt:createContentAction` | `org.jahia.modules.formidable.content` | Jahia 8.2.2.0+, `formidable-engine=0.6` | [docs/content.md](docs/content.md) |
+| `formidable-redirect` | Redirect | `fmdbred:redirectAction` | `org.jahia.modules.formidable.redirect` | Jahia 8.2.2.0+, `formidable-engine=0.6` | [docs/redirect.md](docs/redirect.md) |
 | `formidable-salesforce` | Create Salesforce Lead | `fmdbsfdc:createLeadAction` | `org.jahia.modules.formidable.salesforce` | Jahia 8.2.2.0+, `formidable-engine`, `graphql-dxm-provider` | [docs/salesforce.md](docs/salesforce.md) |
 | `formidable-hubspot` | Create HubSpot Contact | `fmdbhs:createContactAction` | `org.jahia.modules.formidable.hubspot` | same | [docs/hubspot.md](docs/hubspot.md) |
 | `formidable-efficy` | Create Efficy Opportunity | `fmdbeff:createOpportunityAction` | `org.jahia.modules.formidable.efficy` | same | [docs/efficy.md](docs/efficy.md) |
@@ -27,7 +28,7 @@ actions keeps working once the module replaces it.
   ([Jahia/formidable#406](https://github.com/Jahia/formidable/pull/406), being reduced to that extension point). The accounts
   actions need `formidable-extended-inputs` for the password field.
 - **Jahia 8.2.3.0 or later for `formidable-accounts`** (`Jahia-Required-Version`): the Sign in action uses
-  `AuthenticationService`, an OSGi service from that release. The other four modules are compiled against, and ask for,
+  `AuthenticationService`, an OSGi service from that release. The other five modules are compiled against, and ask for,
   Jahia 8.2.2.0.
 - `graphql-dxm-provider` for the three CRM modules (their selectors read the CRM metadata through GraphQL).
 - Enable each module on every site that uses its action (jContent only offers content types of modules enabled on the site;
@@ -37,7 +38,7 @@ actions keeps working once the module replaces it.
 
 ```bash
 export JAVA_HOME=$(/usr/libexec/java_home -v 17)   # JDK 17; Node 22 and Yarn 4 on the PATH (see mise.toml)
-mvn clean install                                   # the five jars; add -o to work offline
+mvn clean install                                   # the six jars; add -o to work offline
 mvn clean install -pl formidable-hubspot            # one module (its parent is resolved from the reactor)
 ```
 

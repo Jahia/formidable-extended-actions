@@ -1,8 +1,8 @@
 # AGENTS.md - formidable-extended-actions
 
-A monorepo of five independent OSGi modules (group `org.jahia.community.modules`), one per family of custom
+A monorepo of six independent OSGi modules (group `org.jahia.community.modules`), one per family of custom
 [Formidable](https://github.com/Jahia/formidable) form actions: `formidable-accounts` (create account, sign in),
-`formidable-content` (create content), `formidable-salesforce`, `formidable-hubspot` and `formidable-efficy` (CRM
+`formidable-content` (create content), `formidable-redirect` (redirect), `formidable-salesforce`, `formidable-hubspot` and `formidable-efficy` (CRM
 connectors). The families used to be modules of the core repository; they are shipped here outside the core release, and a
 Jahia installs only the ones it uses. What each one does: [README.md](README.md) and [docs/](docs/README.md).
 
@@ -71,5 +71,5 @@ and `javascript/apps/package.json` (content and the CRMs). The manifests say:
 | Module | `Jahia-Depends` | `Jahia-Required-Version` |
 |---|---|---|
 | `formidable-accounts` | `default,formidable-engine=0.6` | 8.2.3.0 |
-| `formidable-content` | `default,formidable-engine=0.6` | 8.2.2.0 |
+| `formidable-content`, `formidable-redirect` | `default,formidable-engine=0.6` | 8.2.2.0 |
 | `formidable-salesforce`, `-hubspot`, `-efficy` | `default,formidable-engine,graphql-dxm-provider` | 8.2.2.0 |

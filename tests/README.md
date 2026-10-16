@@ -14,6 +14,7 @@ missing shared support files listed below, then run `yarn lint` over `tests/`.
 |---|---|---|---|
 | Accounts | `e2e/actions/86-accounts-create-account.cy.ts`, `87-accounts-sign-in.cy.ts`, `88-accounts-password-never-stored.cy.ts` | `e2e/support/accounts.ts`, the account builders of `support/fixtures/extendedActions.ts` | `e2e/support/useFormidableSite.ts`, `e2e/security/support.ts`, `support/fixtures/*` (forms, fields, publication, site), `support/commands.ts` |
 | Content | `e2e/actions/90-content-create-content.cy.ts` | the content builder of `support/fixtures/extendedActions.ts` | same |
+| Redirect | `e2e/actions/89-redirect-action.cy.ts` | the redirect builder of `support/fixtures/extendedActions.ts` | same |
 | Salesforce | `e2e/actions/80-salesforce-lead-action.cy.ts`, `81-salesforce-lead-mapping-selector.cy.ts` | `support/fixtures/salesforce.ts`, `page-object/Salesforce*.ts`, `salesforce-mock/` | same |
 | HubSpot | `e2e/actions/82-hubspot-contact-action.cy.ts`, `83-hubspot-contact-mapping-selector.cy.ts` | `support/fixtures/hubspot.ts`, `page-object/Hubspot*.ts`, `hubspot-mock/` | same |
 | Efficy | `e2e/actions/84-efficy-opportunity-action.cy.ts`, `85-efficy-opportunity-mapping-selector.cy.ts` | `support/fixtures/efficy.ts`, `page-object/Efficy*.ts`, `efficy-mock/` | same |

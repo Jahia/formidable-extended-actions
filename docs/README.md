@@ -8,6 +8,7 @@ form action SPI) stays in the [Formidable repository](https://github.com/Jahia/f
 |---|---|---|
 | [accounts.md](accounts.md) | administrators, authors | Create account and Sign in: the configuration file, the permission `formidableAccountsActions`, the sign-up and sign-in forms, e-mail activation, what is and is not protected, troubleshooting |
 | [content.md](content.md) | administrators, authors | Create content: the folder and group model, the mapping (a selector, one row per property), files, the security model, a worked example, troubleshooting, the Java layout |
+| [redirect.md](redirect.md) | authors, developers | Redirect: send the visitor to a page or a path of the site after a submission, what is refused, troubleshooting |
 | [crm-connectors.md](crm-connectors.md) | everyone | What the three CRM families share (connections as operator configuration, the mapping selector, the GraphQL extension, error policy, security) and how they differ |
 | [salesforce.md](salesforce.md) | administrators, authors, developers | Create Salesforce Lead: Connected App and JWT setup, the connection file, authoring, value conversion, errors, security, troubleshooting |
 | [hubspot.md](hubspot.md) | administrators, authors, developers | Create HubSpot Contact: private app token, the connection file, authoring, errors, security, troubleshooting |
@@ -23,6 +24,7 @@ Each family is a module of its own: enable on a site only the ones it uses.
 |---|---|---|---|
 | Accounts | `formidable-accounts` | `formidable-accounts{,_fr,_pt}.properties` | no UI extension |
 | Content | `formidable-content` | `formidable-content{,_fr,_pt}.properties` | `formidable-content`: `contentMapping` |
+| Redirect | `formidable-redirect` | `formidable-redirect{,_fr,_de,_es,_pt}.properties` | no UI extension |
 | Salesforce | `formidable-salesforce` | `formidable-salesforce{,_fr}.properties` | `formidable-salesforce`: `leadMapping` |
 | HubSpot | `formidable-hubspot` | `formidable-hubspot{,_fr}.properties` | `formidable-hubspot`: `contactMapping` |
 | Efficy | `formidable-efficy` | `formidable-efficy{,_fr}.properties` | `formidable-efficy`: `opportunityMapping` |

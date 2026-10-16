@@ -12,7 +12,7 @@
     <version>0.1.0-SNAPSHOT</version>
     <name>Formidable Extended Actions</name>
     <packaging>pom</packaging>
-    <description>Formidable Extended Actions - custom form actions for Formidable, shipped outside the core release as independent Jahia modules, one per action family: formidable-accounts (Create account, Sign in), formidable-content (Create content), formidable-salesforce, formidable-hubspot and formidable-efficy (the CRM connectors). Install only the families you use.</description>
+    <description>Formidable Extended Actions - custom form actions for Formidable, shipped outside the core release as independent Jahia modules, one per action family: formidable-accounts (Create account, Sign in), formidable-content (Create content), formidable-redirect (Redirect), formidable-salesforce, formidable-hubspot and formidable-efficy (the CRM connectors). Install only the families you use.</description>
     <licenses>
         <license>
             <name>GNU General Public License</name>
@@ -26,10 +26,11 @@
         </license>
     </licenses>
 
-    <!-- Five independent bundles: no module depends on another one, and none imports a package of another. -->
+    <!-- Six independent bundles: no module depends on another one, and none imports a package of another. -->
     <modules>
         <module>formidable-accounts</module>
         <module>formidable-content</module>
+        <module>formidable-redirect</module>
         <module>formidable-salesforce</module>
         <module>formidable-hubspot</module>
         <module>formidable-efficy</module>

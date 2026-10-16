@@ -1,0 +1,16 @@
+# gitleaks configuration: the default rules, and the findings that are known not to be secrets.
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Not secrets: a PEM header named in a javadoc, a truncated PEM in a configuration example, Google's public reCAPTCHA test keys"
+paths = [
+  # (the path before and after the split into modules: the history holds both)
+  '''(formidable-salesforce/)?src/main/java/org/jahia/modules/formidable/salesforce/client/PrivateKeyLoader\.java''',
+  '''docs/salesforce\.md''',
+]
+regexes = [
+  # Google's published reCAPTCHA v2 test key pair (https://developers.google.com/recaptcha/docs/faq): accepted by every site, never a secret
+  '''6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI''',
+  '''6LeIxAcTAAAAAGG-vFI1TnRWxMZNFuojJ4WifJWe''',
+]

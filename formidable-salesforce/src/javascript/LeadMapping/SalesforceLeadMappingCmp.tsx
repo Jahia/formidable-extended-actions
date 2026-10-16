@@ -65,7 +65,7 @@ const ConstantValueEditor = ({
     readOnly: boolean;
     onValueChange: (value: string) => void;
 }) => {
-    const {t} = useTranslation('formidable-extended-actions');
+    const {t} = useTranslation('formidable-salesforce');
     const type = sfField?.type ?? sfType ?? '';
     const picklist = sfField?.picklistValues ?? [];
 
@@ -147,7 +147,7 @@ const ConstantValueEditor = ({
 
 export const SalesforceLeadMappingCmp = (props: SelectorProps) => {
     const {field, id, value, onChange} = props;
-    const {t} = useTranslation('formidable-extended-actions');
+    const {t} = useTranslation('formidable-salesforce');
     const client = useApolloClient();
     const readOnly = Boolean(props.readOnly || field.readOnly);
 

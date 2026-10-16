@@ -185,7 +185,7 @@ public final class TestSupport {
             when(form.getPath()).thenReturn("/sites/mysite/forms/f");
             when(form.isNodeType(FmdbMixin.CAPTCHA_PROTECTED_FORM)).thenReturn(captcha);
             JCRSiteNode site = mock(JCRSiteNode.class);
-            when(site.getInstalledModulesWithAllDependencies()).thenReturn(moduleEnabled ? Set.of("default", "formidable-extended-actions") : Set.of("default"));
+            when(site.getInstalledModulesWithAllDependencies()).thenReturn(moduleEnabled ? Set.of("default", "formidable-accounts") : Set.of("default"));
             when(form.getResolveSite()).thenReturn(site);
             return form;
         } catch (Exception e) {

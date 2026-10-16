@@ -33,7 +33,7 @@ import java.util.function.LongSupplier;
 public class AccountsGuard {
 
     /** The Jahia module id: what a site's installed modules list holds. */
-    static final String MODULE_ID = "formidable-extended-actions";
+    static final String MODULE_ID = "formidable-accounts";
 
     /**
      * The permission whoever configures an account action must hold on it (declared under {@code site-admin} by the

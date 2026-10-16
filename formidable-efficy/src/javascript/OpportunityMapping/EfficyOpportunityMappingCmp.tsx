@@ -65,7 +65,7 @@ const ConstantValueEditor = ({
     readOnly: boolean;
     onValueChange: (value: string) => void;
 }) => {
-    const {t} = useTranslation('formidable-extended-actions');
+    const {t} = useTranslation('formidable-efficy');
     const type = effField?.type ?? effType ?? '';
     const picklist = effField?.picklistValues ?? [];
 
@@ -147,7 +147,7 @@ const ConstantValueEditor = ({
 
 export const EfficyOpportunityMappingCmp = (props: SelectorProps) => {
     const {field, id, value, onChange} = props;
-    const {t} = useTranslation('formidable-extended-actions');
+    const {t} = useTranslation('formidable-efficy');
     const client = useApolloClient();
     const readOnly = Boolean(props.readOnly || field.readOnly);
 

@@ -67,7 +67,7 @@ const ConstantValueEditor = ({
     readOnly: boolean;
     onValueChange: (value: string) => void;
 }) => {
-    const {t} = useTranslation('formidable-extended-actions');
+    const {t} = useTranslation('formidable-hubspot');
     const type = hsProperty?.type ?? hsType ?? '';
     const fieldType = hsProperty?.fieldType ?? hsFieldType ?? '';
     const picklist = hsProperty?.picklistValues ?? [];
@@ -150,7 +150,7 @@ const ConstantValueEditor = ({
 
 export const HubspotContactMappingCmp = (props: SelectorProps) => {
     const {field, id, value, onChange} = props;
-    const {t} = useTranslation('formidable-extended-actions');
+    const {t} = useTranslation('formidable-hubspot');
     const client = useApolloClient();
     const readOnly = Boolean(props.readOnly || field.readOnly);
 

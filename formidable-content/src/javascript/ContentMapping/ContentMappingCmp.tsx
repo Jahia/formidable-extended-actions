@@ -24,7 +24,7 @@ import './contentMapping.css';
 type DropdownOption = {label: string; value?: string; description?: string};
 
 const NONE = 'none';
-const NS = 'formidable-extended-actions';
+const NS = 'formidable-content';
 
 interface RawProperty {
     name: string;

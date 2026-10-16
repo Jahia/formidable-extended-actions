@@ -26,8 +26,8 @@ public enum VisitorText {
     /** The platform failed while storing or publishing; nothing was kept. */
     FAILED("visitor.failed", "We could not save your submission. Please try again later.");
 
-    /** Bundle base name as the module's class loader knows it ({@code resources/formidable-extended-actions-content*.properties}). */
-    static final String BUNDLE = "resources.formidable-extended-actions-content";
+    /** Bundle base name as the module's class loader knows it ({@code resources/formidable-content*.properties}). */
+    static final String BUNDLE = "resources.formidable-content";
 
     private final String key;
     private final String english;

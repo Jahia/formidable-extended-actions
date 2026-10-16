@@ -40,8 +40,8 @@ public enum VisitorText {
     /** The page the verification servlet shows for any link that does not work: expired, used, unknown. */
     VERIFY_INVALID("verify.invalid", "This activation link is not valid or has expired.");
 
-    /** Bundle base name as the module's class loader knows it ({@code resources/formidable-extended-actions-accounts*.properties}). */
-    static final String BUNDLE = "resources.formidable-extended-actions-accounts";
+    /** Bundle base name as the module's class loader knows it ({@code resources/formidable-accounts*.properties}). */
+    static final String BUNDLE = "resources.formidable-accounts";
 
     private final String key;
     private final String english;

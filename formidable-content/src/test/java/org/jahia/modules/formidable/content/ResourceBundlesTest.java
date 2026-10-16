@@ -27,20 +27,17 @@ class ResourceBundlesTest {
     private static final Pattern PROPERTY = Pattern.compile("^ - ([A-Za-z:]+) \\(", Pattern.MULTILINE);
     private static final Locale PORTUGUESE = Locale.forLanguageTag("pt");
 
-    /** The editor labels of every family live in one module bundle. */
-    private static final String MODULE_BUNDLE = "formidable-extended-actions";
-    /** The sentences a visitor reads from this family. */
-    private static final String VISITOR_BUNDLE = "formidable-extended-actions-content";
+    /** The module's resource bundle: the editor labels and the sentences a visitor reads (the bundle is named after the module). */
+    private static final String MODULE_BUNDLE = "formidable-content";
 
-    /** The block of the content family in the module's single definitions.cnd (the other families have their own tests). */
+    /** The node type of the module in its definitions.cnd. */
     private static String cnd() throws IOException {
         try (InputStream in = ResourceBundlesTest.class.getResourceAsStream("/META-INF/definitions.cnd")) {
             assertNotNull(in, "definitions.cnd is in the bundle");
             String all = new String(in.readAllBytes(), StandardCharsets.UTF_8);
             int start = all.indexOf("[fmdbcnt:createContentAction]");
-            assertTrue(start >= 0, "the content family is in definitions.cnd");
-            int end = all.indexOf("\n// ====", start);
-            return end < 0 ? all.substring(start) : all.substring(start, end);
+            assertTrue(start >= 0, "the content type is in definitions.cnd");
+            return all.substring(start);
         }
     }
 
@@ -96,10 +93,8 @@ class ResourceBundlesTest {
     @Test
     void theFilesAreAsciiWithEscapes() throws IOException {
         List<String> names = new ArrayList<>();
-        for (String base : List.of(MODULE_BUNDLE, VISITOR_BUNDLE)) {
-            for (String suffix : List.of("", "_fr", "_pt")) {
-                names.add(base + suffix + ".properties");
-            }
+        for (String suffix : List.of("", "_fr", "_pt")) {
+            names.add(MODULE_BUNDLE + suffix + ".properties");
         }
         for (String name : names) {
             try (InputStream in = getClass().getResourceAsStream("/resources/" + name)) {

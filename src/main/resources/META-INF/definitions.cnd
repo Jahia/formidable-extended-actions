@@ -1,0 +1,15 @@
+// Formidable Extended Actions: the node types of every form action this module ships, in ONE file.
+// Each namespace is declared here, once: the engine merges every .cnd of the module into one definition, and a prefix
+// spelled twice leaves the module installed and never started. The families below keep the node type and property
+// names they had as separate modules.
+
+<nt = 'http://www.jcp.org/jcr/nt/1.0'>
+<mix = 'http://www.jcp.org/jcr/mix/1.0'>
+<jnt = 'http://www.jahia.org/jahia/nt/1.0'>
+<fmdbmix = 'http://www.jahia.org/jahia/fmdb/mix/1.0'>
+<fmdbacc = 'http://www.jahia.org/jahia/fmdbacc/nt/1.0'>
+<fmdbaccmix = 'http://www.jahia.org/jahia/fmdbacc/mix/1.0'>
+<fmdbcnt = 'http://www.jahia.org/jahia/fmdbcnt/nt/1.0'>
+<fmdbsfdc = 'http://www.jahia.org/jahia/fmdbsfdc/nt/1.0'>
+<fmdbhs = 'http://www.jahia.org/jahia/fmdbhs/nt/1.0'>
+<fmdbeff = 'http://www.jahia.org/jahia/fmdbeff/nt/1.0'>

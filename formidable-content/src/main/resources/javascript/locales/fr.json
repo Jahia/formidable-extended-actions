@@ -12,18 +12,24 @@
             "constant": "Une valeur fixe",
             "submitter": "La personne qui envoie",
             "organization": "Son organisation",
-            "page": "La page d'où le formulaire est envoyé"
+            "page": "La page d'où le formulaire est envoyé",
+            "pageCategories": "Les catégories de la page d'où le formulaire est envoyé",
+            "submitterProfile": "Le profil de l'auteur de l'envoi"
         },
         "filled": {
             "submitter": "Son identifiant, fourni par la plateforme",
             "organization": "L'organisation de son compte",
-            "page": "Une référence à la page d'où le formulaire est envoyé"
+            "page": "Une référence à la page d'où le formulaire est envoyé",
+            "pageCategories": "Les catégories de la page d'où le formulaire est envoyé, copiées telles quelles",
+            "submitterProfile": "Le contenu qui porte le profil de l'auteur de l'envoi, trouvé par son identifiant"
         },
         "selectField": "Choisir un champ",
         "selectFileField": "Choisir un champ d'envoi",
+        "selectCategoryField": "Choisir un champ de catégories",
         "missingField": "{{name}} (n'est plus dans le formulaire)",
         "valuePlaceholder": "Valeur",
         "valuesPlaceholder": "Une valeur par ligne",
+        "categories": "Catégories",
         "contentTitle": "Le contenu",
         "filesTitle": "Les fichiers enregistrés",
         "fileMixinHint": "Pour remplir des propriétés des fichiers (un crédit, par exemple), choisissez un mixin des fichiers dans Réglages de l'action, Fichiers.",
@@ -32,6 +38,7 @@
         "typeNotFound": "Le type {{type}} n'a pas pu être lu.",
         "missingMandatory": "Propriétés obligatoires non renseignées : {{properties}}. Le contenu ne peut pas être créé sans elles.",
         "fieldGone": "{{property}} lit le champ {{name}}, qui n'est plus dans le formulaire : les envois sont refusés tant qu'un autre champ n'est pas choisi.",
+        "notCategoryField": "Les catégories lisent le champ {{name}}, qui n'est pas un champ de choix en mode catégories : les envois sont refusés tant qu'un champ de catégories n'est pas choisi.",
         "orphans": "Ces lignes remplissent des propriétés que les types choisis n'ont pas ; retirez-les :",
         "remove": "Retirer"
     }

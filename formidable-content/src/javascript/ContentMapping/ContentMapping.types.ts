@@ -6,7 +6,15 @@
 export type MappingTarget = 'content' | 'file';
 
 /** Where a row's value comes from. */
-export type MappingSource = 'field' | 'files' | 'constant' | 'submitter' | 'organization' | 'page';
+export type MappingSource =
+    | 'field'
+    | 'files'
+    | 'constant'
+    | 'submitter'
+    | 'organization'
+    | 'page'
+    | 'pageCategories'
+    | 'submitterProfile';
 
 export interface MappingRow {
     target: MappingTarget;
@@ -43,4 +51,6 @@ export interface FormFieldOption {
     name: string;
     label: string;
     isFile: boolean;
+    /** A choice field in category mode (mixin fmdbmix:categoryOptions with a root category): its values are category node names. */
+    isCategory?: boolean;
 }

@@ -5,8 +5,10 @@ export const MAPPING_VERSION = 1;
 export const CONTENT_TYPE_PROPERTY = 'contentType';
 export const FILE_MIXIN_PROPERTY = 'fileMixin';
 export const TITLE = 'jcr:title';
+/** The property of jmix:categorized: valid on every content type, filled by the two category sources only. */
+export const CATEGORIES = 'j:defaultCategory';
 
-const SOURCES: MappingSource[] = ['field', 'files', 'constant', 'submitter', 'organization', 'page'];
+const SOURCES: MappingSource[] = ['field', 'files', 'constant', 'submitter', 'organization', 'page', 'pageCategories', 'submitterProfile'];
 const isRecord = (candidate: unknown): candidate is Record<string, unknown> =>
     typeof candidate === 'object' && candidate !== null && !Array.isArray(candidate);
 const asString = (candidate: unknown): string => (typeof candidate === 'string' ? candidate : '');
@@ -76,7 +78,9 @@ const CONVERTIBLE_TYPES = new Set(['STRING', 'LONG', 'DOUBLE', 'DECIMAL', 'BOOLE
  * The sources a property can take, in the order the editor offers them; the same rules the action checks on the
  * server (PlanBuilder): a reference takes the files of an upload field (several when multiple) or, single, the page;
  * a single text the submitter or the organization; every convertible type a form field or a fixed value. The title
- * also names the node, so it takes a form field only. A file property takes a form field only.
+ * also names the node, so it takes a form field only. A file property takes a form field only. A reference property also
+ * takes the submitter's profile (single or multiple). The categories (jmix:categorized, on every type) take a form field in
+ * category mode or the categories of the page.
  */
 export const sourcesFor = (property: PropertyOption, target: MappingTarget): MappingSource[] => {
     const type = property.requiredType.toUpperCase();
@@ -88,8 +92,12 @@ export const sourcesFor = (property: PropertyOption, target: MappingTarget): Map
         return ['field'];
     }
 
+    if (property.name === CATEGORIES) {
+        return ['field', 'pageCategories'];
+    }
+
     if (REFERENCE_TYPES.has(type)) {
-        return property.multiple ? ['files'] : ['files', 'page'];
+        return property.multiple ? ['files', 'submitterProfile'] : ['files', 'page', 'submitterProfile'];
     }
 
     if (!CONVERTIBLE_TYPES.has(type)) {
@@ -101,9 +109,17 @@ export const sourcesFor = (property: PropertyOption, target: MappingTarget): Map
         : ['field', 'constant'];
 };
 
-/** The form fields a source reads: the upload fields for files, every other submittable field for a value. */
-export const fieldsFor = (source: MappingSource, fields: FormFieldOption[]): FormFieldOption[] =>
-    fields.filter(field => (source === 'files' ? field.isFile : !field.isFile));
+/**
+ * The form fields a source reads: the upload fields for files, every other submittable field for a value; for the
+ * categories, only the choice fields in category mode (the server refuses any other field).
+ */
+export const fieldsFor = (source: MappingSource, fields: FormFieldOption[], property?: string): FormFieldOption[] => {
+    if (property === CATEGORIES) {
+        return fields.filter(field => Boolean(field.isCategory));
+    }
+
+    return fields.filter(field => (source === 'files' ? field.isFile : !field.isFile));
+};
 
 /** The form field a stored row designates: node id first, then the field key, then the name (a re-created field). */
 export const resolveRowField = (row: MappingRow, fields: FormFieldOption[]): FormFieldOption | undefined => {
@@ -126,9 +142,24 @@ export const visibleProperties = (properties: PropertyOption[], target: MappingT
     return [...title, ...usable.filter(property => property.name !== TITLE)];
 };
 
+/**
+ * The rows of the content table: the visible properties, then Categories, which every content type has (jmix:categorized is
+ * added by the action) whether or not the type declares j:defaultCategory itself.
+ */
+export const contentRows = (properties: PropertyOption[], categoriesLabel: string): PropertyOption[] => [
+    ...visibleProperties(properties.filter(property => property.name !== CATEGORIES), 'content'),
+    {name: CATEGORIES, label: categoriesLabel, requiredType: 'WEAKREFERENCE', multiple: true, mandatory: false}
+];
+
 /** Rows whose property the current types no longer have: shown apart, so the author removes them. */
-export const orphanRows = (rows: MappingRow[], contentProperties: PropertyOption[], fileProperties: PropertyOption[]): MappingRow[] =>
-    rows.filter(row => !(row.target === 'file' ? fileProperties : contentProperties).some(property => property.name === row.property));
+export const orphanRows = (rows: MappingRow[], contentProps: PropertyOption[], fileProps: PropertyOption[]): MappingRow[] =>
+    rows.filter(row => !(row.target === 'content' && row.property === CATEGORIES)
+        && !(row.target === 'file' ? fileProps : contentProps).some(property => property.name === row.property));
+
+/** A category row that reads a form field which is not a choice field in category mode: the server refuses every submission. */
+export const categoryRowsReadingAnotherField = (rows: MappingRow[], fields: FormFieldOption[]): MappingRow[] =>
+    rows.filter(row => row.target === 'content' && row.property === CATEGORIES && row.source === 'field'
+        && resolveRowField(row, fields) !== undefined && !resolveRowField(row, fields)?.isCategory);
 
 /** One value per line in, the values out (blank lines dropped). */
 export const splitValues = (text: string): string[] => text.split(/\r?\n/).map(value => value.trim()).filter(value => value !== '');

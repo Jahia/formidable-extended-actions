@@ -12,18 +12,24 @@
             "constant": "A fixed value",
             "submitter": "The person who submits",
             "organization": "Their organization",
-            "page": "The page the form was sent from"
+            "page": "The page the form was sent from",
+            "pageCategories": "The categories of the page the form was sent from",
+            "submitterProfile": "The submitter's profile"
         },
         "filled": {
             "submitter": "Their user name, set by the platform",
             "organization": "The organization of their account",
-            "page": "A reference to the page the form was sent from"
+            "page": "A reference to the page the form was sent from",
+            "pageCategories": "The categories of the page the form was sent from, copied as they are",
+            "submitterProfile": "The content that carries the submitter's profile, found by their user name"
         },
         "selectField": "Choose a field",
         "selectFileField": "Choose an upload field",
+        "selectCategoryField": "Choose a category field",
         "missingField": "{{name}} (no longer in the form)",
         "valuePlaceholder": "Value",
         "valuesPlaceholder": "One value per line",
+        "categories": "Categories",
         "contentTitle": "The content",
         "filesTitle": "The stored files",
         "fileMixinHint": "To fill properties of the files (a credit, for instance), choose a file mixin under Action settings, Files.",
@@ -32,6 +38,7 @@
         "typeNotFound": "The type {{type}} could not be read.",
         "missingMandatory": "Mandatory properties not mapped: {{properties}}. The content cannot be created without them.",
         "fieldGone": "{{property}} reads the field {{name}}, which is no longer in the form: submissions are refused until you choose another field.",
+        "notCategoryField": "Categories read the field {{name}}, which is not a choice field in category mode: submissions are refused until you choose a category field.",
         "orphans": "These rows fill properties the chosen types do not have; remove them:",
         "remove": "Remove"
     }

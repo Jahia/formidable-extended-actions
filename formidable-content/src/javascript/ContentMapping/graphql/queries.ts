@@ -21,7 +21,10 @@ export const CURRENT_NODE_BY_PATH = gql`
     }
 `;
 
-/** Every form element of the form, with what decides whether it submits a value and whether it is an upload. */
+/**
+ * Every form element of the form, with what decides whether it submits a value, whether it is an upload and whether it
+ * is a choice field in category mode (the mixin and a root category).
+ */
 export const FORM_FIELDS_BY_PATH = gql`
     query ContentMappingFormFields($path: String!, $workspace: Workspace!, $language: String!) {
         jcr(workspace: $workspace) {
@@ -34,7 +37,8 @@ export const FORM_FIELDS_BY_PATH = gql`
                         displayName(language: $language)
                         isNonSubmittable: isNodeType(type: {types: ["fmdbmix:nonSubmittable"]})
                         isFileField: isNodeType(type: {types: ["fmdbmix:fileField"]})
-                        properties(names: ["fieldKey"]) {
+                        isCategoryField: isNodeType(type: {types: ["fmdbmix:categoryOptions"]})
+                        properties(names: ["fieldKey", "optionsRootCategory"]) {
                             name
                             value
                         }

@@ -1,0 +1,45 @@
+{
+    "contentMapping": {
+        "columns": {
+            "property": "Propriedade",
+            "source": "Preenchida por",
+            "value": "Valor"
+        },
+        "sources": {
+            "none": "Sem correspondência",
+            "field": "Um campo do formulário",
+            "files": "Os ficheiros de um campo de envio",
+            "constant": "Um valor fixo",
+            "submitter": "A pessoa que envia",
+            "organization": "A sua organização",
+            "page": "A página de onde o formulário é enviado",
+            "pageCategories": "As categorias da página de onde o formulário é enviado",
+            "submitterProfile": "O perfil de quem envia"
+        },
+        "filled": {
+            "submitter": "O seu nome de utilizador, fornecido pela plataforma",
+            "organization": "A organização da sua conta",
+            "page": "Uma referência à página de onde o formulário é enviado",
+            "pageCategories": "As categorias da página de onde o formulário é enviado, copiadas tal como estão",
+            "submitterProfile": "O conteúdo que tem o perfil de quem envia, encontrado pelo seu nome de utilizador"
+        },
+        "selectField": "Escolher um campo",
+        "selectFileField": "Escolher um campo de envio",
+        "selectCategoryField": "Escolher um campo de categorias",
+        "missingField": "{{name}} (já não está no formulário)",
+        "valuePlaceholder": "Valor",
+        "valuesPlaceholder": "Um valor por linha",
+        "categories": "Categorias",
+        "contentTitle": "O conteúdo",
+        "filesTitle": "Os ficheiros guardados",
+        "fileMixinHint": "Para preencher propriedades dos ficheiros (um crédito, por exemplo), escolha um mixin dos ficheiros em Definições da ação, Ficheiros.",
+        "chooseTypeFirst": "Escolha primeiro o tipo de conteúdo: as suas propriedades aparecem aqui.",
+        "formNotFound": "Não foi possível ler os campos do formulário: guarde a ação dentro de um formulário.",
+        "typeNotFound": "Não foi possível ler o tipo {{type}}.",
+        "missingMandatory": "Propriedades obrigatórias sem correspondência: {{properties}}. O conteúdo não pode ser criado sem elas.",
+        "fieldGone": "{{property}} lê o campo {{name}}, que já não está no formulário: os envios são recusados até escolher outro campo.",
+        "notCategoryField": "As categorias leem o campo {{name}}, que não é um campo de escolha em modo categorias: os envios são recusados até escolher um campo de categorias.",
+        "orphans": "Estas linhas preenchem propriedades que os tipos escolhidos não têm; retire-as:",
+        "remove": "Retirar"
+    }
+}

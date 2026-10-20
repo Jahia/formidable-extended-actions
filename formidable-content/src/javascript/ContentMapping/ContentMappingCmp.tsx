@@ -4,8 +4,11 @@ import React, {useEffect, useMemo, useState} from 'react';
 import {useTranslation} from 'react-i18next';
 import {CURRENT_NODE_BY_PATH, FORM_FIELDS_BY_PATH, NODE_TYPE_PROPERTIES} from './graphql';
 import {
+    CATEGORIES,
     CONTENT_TYPE_PROPERTY,
     FILE_MIXIN_PROPERTY,
+    categoryRowsReadingAnotherField,
+    contentRows,
     fieldsFor,
     orphanRows,
     parseMapping,
@@ -42,6 +45,7 @@ interface RawField {
     displayName?: string | null;
     isNonSubmittable?: boolean;
     isFileField?: boolean;
+    isCategoryField?: boolean;
     properties?: Array<{name: string; value?: string | null}> | null;
 }
 
@@ -62,12 +66,24 @@ const toFieldOptions = (raw: RawField[] = []): FormFieldOption[] => raw
         fieldKey: field.properties?.find(property => property.name === 'fieldKey')?.value ?? undefined,
         name: field.name,
         label: field.displayName || field.name,
-        isFile: Boolean(field.isFileField)
+        isFile: Boolean(field.isFileField),
+        // category mode needs the mixin and a root category: a field with the mixin and no root offers no value
+        isCategory: Boolean(field.isCategoryField) && Boolean(field.properties?.find(property => property.name === 'optionsRootCategory')?.value)
     }));
 
+/** The placeholder of the field chooser: upload fields, category fields, or any other field. */
+const fieldPlaceholderKey = (source: MappingSource, property: string): string => {
+    if (source === 'files') {
+        return 'contentMapping.selectFileField';
+    }
+
+    return property === CATEGORIES ? 'contentMapping.selectCategoryField' : 'contentMapping.selectField';
+};
+
 /** The value cell of a row: the form field it reads, its fixed values, or what the platform fills. */
-const ValueCell = ({row, multiple, fields, readOnly, inputId, onField, onValues}: {
+const ValueCell = ({row, property, multiple, fields, readOnly, inputId, onField, onValues}: {
     row?: MappingRow;
+    property: string;
     multiple: boolean;
     fields: FormFieldOption[];
     readOnly: boolean;
@@ -81,7 +97,8 @@ const ValueCell = ({row, multiple, fields, readOnly, inputId, onField, onValues}
     }
 
     if (row.source === 'field' || row.source === 'files') {
-        const choices = fieldsFor(row.source, fields);
+        const choices = fieldsFor(row.source, fields, property);
+        const placeholderKey = fieldPlaceholderKey(row.source, property);
         const resolved = resolveRowField(row, fields);
         const options: DropdownOption[] = choices.map(field => ({label: field.label, value: field.id, description: field.name}));
         if (!resolved && (row.fieldName || row.nodeId)) {
@@ -95,7 +112,7 @@ const ValueCell = ({row, multiple, fields, readOnly, inputId, onField, onValues}
                 data={options}
                 hasSearch={options.length >= 6}
                 value={resolved?.id ?? (row.nodeId || row.fieldName || undefined)}
-                placeholder={t(row.source === 'files' ? 'contentMapping.selectFileField' : 'contentMapping.selectField')}
+                placeholder={t(placeholderKey)}
                 isDisabled={readOnly}
                 onChange={(_event, item) => {
                     const field = choices.find(candidate => candidate.id === item.value);
@@ -273,7 +290,7 @@ export const ContentMappingCmp = (props: SelectorProps) => {
     const setValues = (target: MappingTarget, property: string, values: string[]) => commit(rows.map(row => (
         row.target === target && row.property === property ? {...row, values} : row)));
 
-    const content = visibleProperties(contentProperties, 'content');
+    const content = contentRows(contentProperties, t('contentMapping.categories'));
     const files = visibleProperties(fileProperties, 'file');
     const orphans = typesState === 'ready' ? orphanRows(rows, contentProperties, fileProperties) : [];
     const missing = typesState === 'ready'
@@ -282,6 +299,8 @@ export const ContentMappingCmp = (props: SelectorProps) => {
     const brokenFields = fieldsState === 'ready'
         ? rows.filter(row => (row.source === 'field' || row.source === 'files') && (row.fieldName || row.nodeId) && !resolveRowField(row, fields))
         : [];
+
+    const notCategoryFields = fieldsState === 'ready' ? categoryRowsReadingAnotherField(rows, fields) : [];
 
     const renderRow = (target: MappingTarget, property: PropertyOption) => {
         const row = rowOf(target, property.name);
@@ -308,6 +327,7 @@ export const ContentMappingCmp = (props: SelectorProps) => {
                 <div role="cell">
                     <ValueCell
                         row={row}
+                        property={property.name}
                         multiple={property.multiple}
                         fields={fields}
                         readOnly={readOnly}
@@ -356,11 +376,16 @@ export const ContentMappingCmp = (props: SelectorProps) => {
                 </>
             )}
 
-            {(missing.length > 0 || brokenFields.length > 0) && (
+            {(missing.length > 0 || brokenFields.length > 0 || notCategoryFields.length > 0) && (
                 <div className="flexCol" data-sel-role="content-mapping-warnings">
                     {missing.length > 0 && (
                         <Typography variant="caption" className="fmdbxa-contentMappingWarning">{t('contentMapping.missingMandatory', {properties: missing.join(', ')})}</Typography>
                     )}
+                    {notCategoryFields.map(row => (
+                        <Typography key={`${row.target}-${row.property}-notCategory`} variant="caption" className="fmdbxa-contentMappingError">
+                            {t('contentMapping.notCategoryField', {name: row.fieldName || row.nodeId})}
+                        </Typography>
+                    ))}
                     {brokenFields.map(row => (
                         <Typography key={`${row.target}-${row.property}`} variant="caption" className="fmdbxa-contentMappingError">
                             {t('contentMapping.fieldGone', {property: row.property, name: row.fieldName || row.nodeId})}

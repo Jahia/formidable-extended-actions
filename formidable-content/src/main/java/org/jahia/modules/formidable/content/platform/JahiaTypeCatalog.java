@@ -4,9 +4,12 @@ import org.jahia.modules.formidable.content.convert.PropertyShape;
 import org.jahia.services.content.nodetypes.ExtendedNodeType;
 import org.jahia.services.content.nodetypes.ExtendedPropertyDefinition;
 import org.jahia.services.content.nodetypes.NodeTypeRegistry;
+import org.jahia.services.content.nodetypes.SelectorType;
 import org.osgi.service.component.annotations.Component;
 
+import javax.jcr.PropertyType;
 import javax.jcr.nodetype.NoSuchNodeTypeException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -33,6 +36,14 @@ public class JahiaTypeCatalog implements TypeCatalog {
     }
 
     @Override
+    public boolean isOfType(String typeName, String ofType) {
+        if (ofType == null || ofType.isBlank()) {
+            return false;
+        }
+        return find(typeName).map(type -> type.isNodeType(ofType)).orElse(false);
+    }
+
+    @Override
     public Optional<PropertyShape> property(List<String> types, String propertyName) {
         if (!isFillable(propertyName)) {
             return Optional.empty();
@@ -44,11 +55,26 @@ public class JahiaTypeCatalog implements TypeCatalog {
             }
             ExtendedPropertyDefinition definition = type.get().getPropertyDefinitionsAsMap().get(propertyName);
             if (definition != null && !definition.isProtected()) {
+                boolean richText = definition.getRequiredType() == PropertyType.STRING
+                        && definition.getSelector() == SelectorType.RICHTEXT;
                 return Optional.of(new PropertyShape(propertyName, definition.getRequiredType(), definition.isMultiple(),
-                        definition.isInternationalized()));
+                        definition.isInternationalized(), richText, constraintsOf(definition)));
             }
         }
         return Optional.empty();
+    }
+
+    private static List<String> constraintsOf(ExtendedPropertyDefinition definition) {
+        String[] constraints = definition.getValueConstraints();
+        List<String> names = new ArrayList<>();
+        if (constraints != null) {
+            for (String constraint : constraints) {
+                if (constraint != null && !constraint.isBlank()) {
+                    names.add(constraint);
+                }
+            }
+        }
+        return names;
     }
 
     /**

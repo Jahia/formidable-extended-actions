@@ -27,12 +27,21 @@ public final class ImageSize {
     }
 
     /**
+     * @param mimeType the detected MIME type, may be {@code null}
+     * @return whether the file is stored as an image ({@code jmix:image}): any {@code image/*} type, whether or not the
+     *         JDK can read its size (WebP and SVG have no JDK reader but are images for a picker that wants one)
+     */
+    public static boolean looksLikeImage(String mimeType) {
+        return mimeType != null && mimeType.toLowerCase(java.util.Locale.ROOT).startsWith("image/");
+    }
+
+    /**
      * @param data     the file's bytes
      * @param mimeType the detected MIME type; anything but {@code image/*} answers empty without reading
      * @return the size, or empty when the type is not an image, the JDK cannot read it, or its header is damaged
      */
     public static Optional<Dimensions> of(byte[] data, String mimeType) {
-        if (data == null || data.length == 0 || mimeType == null || !mimeType.toLowerCase(java.util.Locale.ROOT).startsWith("image/")) {
+        if (data == null || data.length == 0 || !looksLikeImage(mimeType)) {
             return Optional.empty();
         }
         try (ImageInputStream input = ImageIO.createImageInputStream(new ByteArrayInputStream(data))) {

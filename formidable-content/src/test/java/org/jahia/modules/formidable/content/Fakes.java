@@ -21,10 +21,14 @@ public final class Fakes {
     public static class Catalog implements TypeCatalog {
         public static final String CONTENT_TYPE = "ctmd:submission";
         public static final String FILE_MIXIN = "ctmdmix:credited";
+        public static final String CATEGORIZED = "jmix:categorized";
 
         private final Map<String, Map<String, PropertyShape>> types = new HashMap<>();
         private final Set<String> creatable = new HashSet<>();
         private final Set<String> mixins = new HashSet<>();
+        private final Map<String, Set<String>> supertypes = new HashMap<>();
+        /** The types that already are categorized (the mixin is then not added). */
+        public final Set<String> categorizedTypes = new HashSet<>();
 
         public Catalog() {
             creatable.add(CONTENT_TYPE);
@@ -44,7 +48,19 @@ public final class Fakes {
             add(submission, "captions", PropertyType.WEAKREFERENCE, true, false);
             add(submission, "cover", PropertyType.WEAKREFERENCE, false, false);
             add(submission, "score", PropertyType.NAME, false, false);
+            // the story-like properties: rich text, a single image, the authors (profiles), a single editor
+            submission.put("body", new PropertyShape("body", PropertyType.STRING, false, true, true, List.of()));
+            submission.put("teaser", new PropertyShape("teaser", PropertyType.STRING, true, true, true, List.of()));
+            submission.put("image", new PropertyShape("image", PropertyType.WEAKREFERENCE, false, false, false, List.of("jmix:image")));
+            submission.put("authors", new PropertyShape("authors", PropertyType.WEAKREFERENCE, true, false, false, List.of("ctmd:author")));
+            submission.put("editor", new PropertyShape("editor", PropertyType.WEAKREFERENCE, false, false, false, List.of("ctmd:author")));
+            submission.put("anyone", new PropertyShape("anyone", PropertyType.REFERENCE, true, false, false, List.of()));
             types.put(CONTENT_TYPE, submission);
+            Map<String, PropertyShape> categorized = new HashMap<>();
+            categorized.put("j:defaultCategory", new PropertyShape("j:defaultCategory", PropertyType.WEAKREFERENCE, true, false, false, List.of("jnt:category")));
+            types.put(CATEGORIZED, categorized);
+            supertypes.put("jnt:file", Set.of("nt:file", "nt:hierarchyNode"));
+            supertypes.put("ctmd:person", Set.of("ctmd:author"));
             Map<String, PropertyShape> file = new HashMap<>();
             add(file, "jcr:title", PropertyType.STRING, false, true);
             types.put("jnt:file", file);
@@ -67,6 +83,14 @@ public final class Fakes {
         @Override
         public boolean isMixin(String name) {
             return mixins.contains(name);
+        }
+
+        @Override
+        public boolean isOfType(String typeName, String ofType) {
+            if (CATEGORIZED.equals(ofType) && categorizedTypes.contains(typeName)) {
+                return true;
+            }
+            return typeName.equals(ofType) || supertypes.getOrDefault(typeName, Set.of()).contains(ofType);
         }
 
         @Override

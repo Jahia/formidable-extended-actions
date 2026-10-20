@@ -3,6 +3,16 @@
 <jnt = 'http://www.jahia.org/jahia/nt/1.0'>
 <fmdbmix = 'http://www.jahia.org/jahia/fmdb/mix/1.0'>
 <fmdbcnt = 'http://www.jahia.org/jahia/fmdbcnt/nt/1.0'>
+<fmdbcntmix = 'http://www.jahia.org/jahia/fmdbcnt/mix/1.0'>
+
+// The profile of a submitter: an optional mixin an editor adds to any content (an author, a contributor) in the Content
+// Editor, carrying the Jahia user name of the person it stands for. A Create content action whose mapping fills a
+// reference property from "the submitter's profile" (a story's authors) links the content of the user who sends the form.
+// The user name is compared exactly, so it is indexed untokenized; it is not hidden: editors set it by hand.
+[fmdbcntmix:submitterProfile] mixin
+ extends = jnt:content
+ itemtype = content
+ - submitterUser (string) indexed=untokenized
 
 // Formidable Content: the "Create content" form action. A signed-in user's submission becomes a content node of a
 // chosen type (the form's fields fill its properties), the uploaded files become jnt:file nodes the content references,
@@ -12,9 +22,11 @@
 //
 // What fills what is ONE JSON document, `mapping`, written by the ContentMapping selector type of the Content Editor
 // (never typed by hand): {"version":1,"rows":[{"target":"content"|"file","property":"<name>","source":"field"|"files"|
-// "constant"|"submitter"|"organization"|"page", ...}]}. A field row names its form field by node id, field key and name
-// (a renamed field still resolves); a constant row carries "values". jcr:title from a field also names the node. The
-// companion-file rule stays a line of text: requiredPairs  dependentField<-field:mimePattern  e.g. captions<-media:video/*
+// "constant"|"submitter"|"organization"|"page"|"pageCategories"|"submitterProfile", ...}]}. A field row names its form field
+// by node id, field key and name (a renamed field still resolves); a constant row carries "values". jcr:title from a field
+// also names the node. j:defaultCategory (jmix:categorized, on every type) takes a choice field in category mode or the
+// categories of the page ("pageCategories"); a reference property takes "submitterProfile". The companion-file rule
+// stays a line of text: requiredPairs  dependentField<-field:mimePattern  e.g. captions<-media:video/*
 [fmdbcnt:createContentAction] > jnt:content, fmdbmix:formAction, mix:title
  - jcr:title (string) = resourceBundle('fmdbcnt_createContentAction') autocreated i18n
  - contentType (string, choicelist[formidableContentTypes]) mandatory indexed=no

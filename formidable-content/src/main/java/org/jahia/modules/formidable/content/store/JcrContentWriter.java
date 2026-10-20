@@ -273,18 +273,29 @@ public class JcrContentWriter implements ContentWriter {
         }
     }
 
+    /**
+     * Every {@code image/*} file is a {@code jmix:image}, so that a picker or a reference constraint that wants an image
+     * accepts it; the size is added when the JDK can read it from the header (PNG, JPEG, GIF, BMP), never decoded.
+     */
     private static void addImageSize(JCRNodeWrapper file, byte[] data, String mimeType) throws RepositoryException {
-        ImageSize.of(data, mimeType).ifPresent(size -> {
-            try {
-                file.addMixin(IMAGE_MIXIN);
-                file.setProperty("j:width", (long) size.width());
-                file.setProperty("j:height", (long) size.height());
-            } catch (NoSuchNodeTypeException e) {
-                log.debug("[formidable-content] The mixin {} is not registered: the image is stored without its size.", IMAGE_MIXIN);
-            } catch (RepositoryException e) {
-                log.warn("[formidable-content] The size of an image could not be stored.", e);
-            }
-        });
+        if (!ImageSize.looksLikeImage(mimeType)) {
+            return;
+        }
+        try {
+            file.addMixin(IMAGE_MIXIN);
+            ImageSize.of(data, mimeType).ifPresent(size -> {
+                try {
+                    file.setProperty("j:width", (long) size.width());
+                    file.setProperty("j:height", (long) size.height());
+                } catch (RepositoryException e) {
+                    log.warn("[formidable-content] The size of an image could not be stored.", e);
+                }
+            });
+        } catch (NoSuchNodeTypeException e) {
+            log.debug("[formidable-content] The mixin {} is not registered: the image is stored without it.", IMAGE_MIXIN);
+        } catch (RepositoryException e) {
+            log.warn("[formidable-content] The image mixin could not be added to a file.", e);
+        }
     }
 
     private JCRNodeWrapper createContentNode(ContentPlan plan, JCRSessionWrapper session, Map<String, List<String>> storedByProperty,
@@ -296,6 +307,11 @@ public class JcrContentWriter implements ContentWriter {
             String name = attempt == 0 ? NodeNames.unique(base, candidate -> hasChild(parent, candidate)) : NodeNames.randomized(base);
             try {
                 JCRNodeWrapper node = parent.addNode(name, plan.contentType());
+                for (String mixin : plan.contentMixins()) {
+                    if (!node.isNodeType(mixin)) {
+                        node.addMixin(mixin);
+                    }
+                }
                 if (plan.title() != null) {
                     node.setProperty(TITLE, plan.title());
                 }

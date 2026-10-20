@@ -26,8 +26,16 @@ public interface TypeCatalog {
     boolean isMixin(String name);
 
     /**
+     * @param typeName a node type name (a primary type or a mixin)
+     * @param ofType   a node type name
+     * @return whether {@code typeName} exists and is {@code ofType} or inherits from it; false when either is unknown
+     */
+    boolean isOfType(String typeName, String ofType);
+
+    /**
      * Looks a property up on the given types, in order. A property that is protected, or whose name belongs to the
-     * platform ({@code jcr:}, {@code rep:}, except {@code jcr:title} and {@code jcr:description}) is not offered.
+     * platform ({@code jcr:}, {@code rep:}, except {@code jcr:title} and {@code jcr:description}) is not offered. The shape carries the rich-text selector and the value
+     * constraints of the definition.
      *
      * @param types        the primary type, then the mixins the node will carry
      * @param propertyName the property as an author wrote it

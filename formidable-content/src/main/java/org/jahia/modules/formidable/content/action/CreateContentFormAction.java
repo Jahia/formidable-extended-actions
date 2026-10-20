@@ -7,10 +7,13 @@ import org.jahia.modules.formidable.content.mapping.FormFields;
 import org.jahia.modules.formidable.content.mapping.PairRule;
 import org.jahia.modules.formidable.content.messages.VisitorText;
 import org.jahia.modules.formidable.content.page.RefererPages;
+import org.jahia.modules.formidable.content.plan.CategoryField;
 import org.jahia.modules.formidable.content.plan.ContentPlan;
 import org.jahia.modules.formidable.content.plan.PlanBuilder;
 import org.jahia.modules.formidable.content.plan.Settings;
 import org.jahia.modules.formidable.content.plan.ValueException;
+import org.jahia.modules.formidable.content.platform.Categories;
+import org.jahia.modules.formidable.content.platform.SubmitterProfiles;
 import org.jahia.modules.formidable.content.platform.Submitters;
 import org.jahia.modules.formidable.content.platform.TypeCatalog;
 import org.jahia.modules.formidable.content.store.ContentWriter;
@@ -20,7 +23,9 @@ import org.jahia.modules.formidable.engine.api.FormActionContext;
 import org.jahia.modules.formidable.engine.api.FormActionException;
 import org.jahia.modules.formidable.engine.api.FormActionResult;
 import org.jahia.services.content.JCRNodeWrapper;
+import org.jahia.services.content.JCRPropertyWrapper;
 import org.jahia.services.content.JCRSessionWrapper;
+import org.jahia.services.content.JCRValueWrapper;
 import org.jahia.services.content.decorator.JCRSiteNode;
 import org.jahia.services.usermanager.JahiaUser;
 import org.jahia.services.usermanager.JahiaUserManagerService;
@@ -76,10 +81,13 @@ public class CreateContentFormAction implements ContextualFormAction {
     private static final Pattern TYPE_NAME = Pattern.compile("[A-Za-z0-9_.-]+:[A-Za-z0-9_.-]+");
     private static final String PAGE_TYPE = "jnt:page";
     private static final String MAIN_RESOURCE = "jmix:mainResource";
+    private static final String CATEGORIES = ContentMapping.CATEGORIES;
 
     private Submitters submitters;
     private ContentWriter writer;
     private TypeCatalog catalog;
+    private Categories categories;
+    private SubmitterProfiles profiles;
 
     /**
      * @param submitters the platform's view of the submitter: groups, organization
@@ -103,6 +111,22 @@ public class CreateContentFormAction implements ContextualFormAction {
     @Reference
     public void setCatalog(TypeCatalog catalog) {
         this.catalog = catalog;
+    }
+
+    /**
+     * @param categories the children of the root category of a category field
+     */
+    @Reference
+    public void setCategories(Categories categories) {
+        this.categories = categories;
+    }
+
+    /**
+     * @param profiles the profile content of the submitter
+     */
+    @Reference
+    public void setProfiles(SubmitterProfiles profiles) {
+        this.profiles = profiles;
     }
 
     @Override
@@ -175,6 +199,12 @@ public class CreateContentFormAction implements ContextualFormAction {
         }
         FormFields fields = FormFields.of(form);
         ContentMapping.Parts parts = ContentMapping.toParts(ContentMapping.parse(ActionProps.string(action, "mapping")), fields::nameOf);
+        List<CategoryField> categoryFields = new ArrayList<>();
+        for (String name : parts.categoryFields()) {
+            String root = fields.categoryRootOf(name).orElseThrow(() -> new ConfigException("Setting 'mapping': the field '" + name
+                    + "' fills " + ContentMapping.CATEGORIES + " but is not a choice field in category mode (mixin fmdbmix:categoryOptions with a root category)"));
+            categoryFields.add(new CategoryField(name, root));
+        }
         return new Settings(type,
                 ActionProps.string(action, "groupPrefix"),
                 parts.titleField(),
@@ -187,7 +217,8 @@ public class CreateContentFormAction implements ContextualFormAction {
                 parts.organizationProperty(),
                 parts.pageProperty(),
                 PairRule.parse(ActionProps.lines(action, "requiredPairs")),
-                ActionProps.bool(action, "publish", true));
+                ActionProps.bool(action, "publish", true),
+                categoryFields, parts.pageCategories(), parts.profileProperties());
     }
 
     private String subfolderOf(Settings settings, JahiaUser user, FormActionContext context, JCRNodeWrapper action) throws FormActionException {
@@ -252,11 +283,12 @@ public class CreateContentFormAction implements ContextualFormAction {
                                JCRSessionWrapper visitor, JCRNodeWrapper action) throws ConfigException, FormActionException {
         Locale locale = context.locale();
         String organization = settings.organizationProperty() == null ? null : submitters.organization(user);
-        String pageId = settings.pageProperty() == null ? null : pageOf(visitor, context);
+        PlanBuilder.Page page = settings.pageProperty() == null && !settings.pageCategories()
+                ? PlanBuilder.Page.NONE : pageOf(visitor, context, settings.pageCategories());
         PlanBuilder.Submission submission = new PlanBuilder.Submission(context.parameters(), context.files());
         try {
-            return PlanBuilder.build(settings, submission, new PlanBuilder.Identity(user.getUsername(), organization), pageId, target,
-                    languagesOf(context), catalog);
+            return PlanBuilder.build(settings, submission, new PlanBuilder.Identity(user.getUsername(), organization), page, target,
+                    languagesOf(context), catalog, new PlanBuilder.Lookups(categories, profiles));
         } catch (ValueException e) {
             log.warn("[formidable-content] A submission to {} was refused: {}", action.getPath(), e.getMessage());
             String message = e.kind() == ValueException.Kind.PAIR ? pairMessage(action, locale) : VisitorText.BAD_VALUE.in(locale);
@@ -283,22 +315,43 @@ public class CreateContentFormAction implements ContextualFormAction {
     }
 
     /**
-     * The page the form was submitted from, as an identifier: the first path {@link RefererPages} proposes that the
-     * submitter can read in live and that is a page or a main resource. Empty (the property stays unset) otherwise.
+     * The page the form was submitted from: the first path {@link RefererPages} proposes that the submitter can read in
+     * live and that is a page or a main resource, with its {@code j:defaultCategory} values when they are wanted (read
+     * from the same node, in the same live session, and copied as identifiers). No page: nothing, never an error.
      */
-    private static String pageOf(JCRSessionWrapper visitor, FormActionContext context) {
+    private static PlanBuilder.Page pageOf(JCRSessionWrapper visitor, FormActionContext context, boolean withCategories) {
         String referer = context.request().getHeader("Referer");
         for (String path : RefererPages.candidatePaths(referer, context.request().getServerName(), context.siteKey())) {
             try {
                 JCRNodeWrapper node = visitor.getNode(path);
                 if (node.isNodeType(PAGE_TYPE) || node.isNodeType(MAIN_RESOURCE)) {
-                    return node.getIdentifier();
+                    return new PlanBuilder.Page(node.getIdentifier(), withCategories ? categoriesOf(node) : List.of());
                 }
             } catch (RepositoryException e) {
                 log.debug("[formidable-content] The path {} proposed by the Referer is not a readable page.", path);
             }
         }
-        return null;
+        return PlanBuilder.Page.NONE;
+    }
+
+    /** The identifiers in {@code j:defaultCategory} of a page; none when it has none or they cannot be read. */
+    private static List<String> categoriesOf(JCRNodeWrapper page) {
+        List<String> identifiers = new ArrayList<>();
+        try {
+            if (page.hasProperty(CATEGORIES)) {
+                JCRPropertyWrapper property = page.getProperty(CATEGORIES);
+                for (JCRValueWrapper value : property.isMultiple() ? property.getValues() : new JCRValueWrapper[]{property.getValue()}) {
+                    String identifier = value.getString();
+                    if (identifier != null && !identifier.isBlank()) {
+                        identifiers.add(identifier);
+                    }
+                }
+            }
+        } catch (RepositoryException e) {
+            log.warn("[formidable-content] The categories of the page {} could not be read: none is copied.", page.getPath(), e);
+            return List.of();
+        }
+        return identifiers;
     }
 
     /** The site's languages, the default one first: the title and the translated values are written in each. */

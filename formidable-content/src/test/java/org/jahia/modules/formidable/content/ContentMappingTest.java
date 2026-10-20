@@ -12,6 +12,7 @@ import java.util.Optional;
 import java.util.function.Function;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -96,5 +97,63 @@ class ContentMappingTest {
             List<Row> rows = ContentMapping.parse(bad);
             assertThrows(ConfigException.class, () -> ContentMapping.toParts(rows, BY_ID), bad);
         }
+    }
+
+    private static final String STORY = "{\"version\":1,\"rows\":["
+            + "{\"target\":\"content\",\"property\":\"j:defaultCategory\",\"source\":\"field\",\"nodeId\":\"id-topic\",\"fieldName\":\"topic\"},"
+            + "{\"target\":\"content\",\"property\":\"j:defaultCategory\",\"source\":\"field\",\"nodeId\":\"id-region\",\"fieldName\":\"region\"},"
+            + "{\"target\":\"content\",\"property\":\"j:defaultCategory\",\"source\":\"pageCategories\"},"
+            + "{\"target\":\"content\",\"property\":\"authors\",\"source\":\"submitterProfile\"},"
+            + "{\"target\":\"content\",\"property\":\"editor\",\"source\":\"submitterprofile\"},"
+            + "{\"target\":\"content\",\"property\":\"image\",\"source\":\"files\",\"nodeId\":\"id-media\",\"fieldName\":\"media\"}"
+            + "]}";
+    private static final Function<Row, Optional<String>> STORY_FIELDS = row -> Optional.ofNullable(Map.of("id-topic", "topic",
+            "id-region", "region", "id-media", "media").get(row.nodeId()));
+
+    @Test
+    void theCategoryAndProfileSourcesAreReadInTheirCamelCaseSpelling() throws Exception {
+        // Verifies the document shapes of the story mapping: category fields in row order (they never become ordinary
+        // field mappings), the page's categories, the profile properties, and the existing rows unchanged.
+        ContentMapping.Parts parts = ContentMapping.toParts(ContentMapping.parse(STORY), STORY_FIELDS);
+
+        assertEquals(List.of("topic", "region"), parts.categoryFields());
+        assertTrue(parts.pageCategories());
+        assertEquals(List.of("authors", "editor"), parts.profileProperties());
+        assertTrue(parts.fieldMappings().isEmpty(), "j:defaultCategory is not an ordinary field mapping");
+        assertEquals(List.of(new Mappings.Entry("media", "image")), parts.fileMappings());
+        assertEquals(ContentMapping.Source.PAGE_CATEGORIES, ContentMapping.parse(STORY).get(2).source());
+        assertEquals(ContentMapping.Source.SUBMITTER_PROFILE, ContentMapping.parse(STORY).get(3).source());
+    }
+
+    @Test
+    void withoutTheNewRowsTheNewPartsAreEmpty() throws Exception {
+        ContentMapping.Parts parts = ContentMapping.toParts(ContentMapping.parse(DOCUMENT), BY_ID);
+        assertTrue(parts.categoryFields().isEmpty() && parts.profileProperties().isEmpty());
+        assertFalse(parts.pageCategories());
+    }
+
+    @Test
+    void theCategoriesTakeOnlyAFieldOrThePagesCategoriesAndThePagesCategoriesOnlyFillTheCategories() throws Exception {
+        // Verifies the refusals: any other source on j:defaultCategory, the page's categories on another property, the
+        // profile twice on one property, a file property filled from the profile.
+        for (String bad : new String[]{
+                "{\"rows\":[{\"property\":\"j:defaultCategory\",\"source\":\"constant\",\"values\":[\"x\"]}]}",
+                "{\"rows\":[{\"property\":\"j:defaultCategory\",\"source\":\"submitter\"}]}",
+                "{\"rows\":[{\"property\":\"j:defaultCategory\",\"source\":\"page\"}]}",
+                "{\"rows\":[{\"property\":\"j:defaultCategory\",\"source\":\"files\",\"nodeId\":\"id-media\"}]}",
+                "{\"rows\":[{\"property\":\"j:defaultCategory\",\"source\":\"submitterProfile\"}]}",
+                "{\"rows\":[{\"property\":\"tags\",\"source\":\"pageCategories\"}]}",
+                "{\"rows\":[{\"property\":\"authors\",\"source\":\"submitterProfile\"},{\"property\":\"authors\",\"source\":\"submitterProfile\"}]}",
+                "{\"rows\":[{\"target\":\"file\",\"property\":\"credit\",\"source\":\"submitterProfile\"}]}",
+                "{\"rows\":[{\"target\":\"file\",\"property\":\"credit\",\"source\":\"pageCategories\"}]}"}) {
+            List<Row> rows = ContentMapping.parse(bad);
+            assertThrows(ConfigException.class, () -> ContentMapping.toParts(rows, BY_ID), bad);
+        }
+    }
+
+    @Test
+    void aCategoryRowWhoseFieldLeftTheFormIsAConfigurationError() throws Exception {
+        List<Row> rows = ContentMapping.parse("{\"rows\":[{\"property\":\"j:defaultCategory\",\"source\":\"field\",\"nodeId\":\"gone\",\"fieldName\":\"topic\"}]}");
+        assertThrows(ConfigException.class, () -> ContentMapping.toParts(rows, STORY_FIELDS));
     }
 }

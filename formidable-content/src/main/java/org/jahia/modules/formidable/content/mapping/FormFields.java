@@ -16,7 +16,7 @@ import java.util.Set;
  * the name its field is submitted under (the node name: the HTML {@code name} and the key of the submitted values),
  * even after the field was renamed. Walks {@code fields} recursively (steps and fieldsets nest freely); a field is a
  * {@code fmdbmix:formElement} that is not {@code fmdbmix:nonSubmittable}; the first occurrence of a name wins, as in
- * the engine. Built once per submission; not thread-safe, not shared.
+ * the engine. It also tells which choice fields are in category mode and the root category of each. Built once per submission; not thread-safe, not shared.
  */
 public final class FormFields {
 
@@ -24,10 +24,13 @@ public final class FormFields {
     static final String FORM_ELEMENT = "fmdbmix:formElement";
     static final String NON_SUBMITTABLE = "fmdbmix:nonSubmittable";
     static final String FIELD_KEY = "fieldKey";
+    static final String CATEGORY_OPTIONS = "fmdbmix:categoryOptions";
+    static final String CATEGORY_ROOT = "optionsRootCategory";
 
     private final Map<String, String> nameById = new HashMap<>();
     private final Map<String, String> nameByKey = new HashMap<>();
     private final Set<String> names = new HashSet<>();
+    private final Map<String, String> categoryRootByName = new HashMap<>();
 
     private FormFields() {
     }
@@ -55,7 +58,13 @@ public final class FormFields {
         for (JCRNodeWrapper child : node.getNodes()) {
             if (child.isNodeType(FORM_ELEMENT) && !child.isNodeType(NON_SUBMITTABLE)) {
                 String name = child.getName();
-                names.add(name);
+                if (names.add(name) && child.isNodeType(CATEGORY_OPTIONS) && child.hasProperty(CATEGORY_ROOT)) {
+                    // the first field of a name wins, as in the engine; the weak reference reads as the root's identifier
+                    String root = child.getProperty(CATEGORY_ROOT).getString();
+                    if (root != null && !root.isBlank()) {
+                        categoryRootByName.put(name, root.trim());
+                    }
+                }
                 nameById.putIfAbsent(child.getIdentifier(), name);
                 if (child.hasProperty(FIELD_KEY)) {
                     String key = child.getProperty(FIELD_KEY).getString();
@@ -66,6 +75,16 @@ public final class FormFields {
             }
             collect(child);
         }
+    }
+
+    /**
+     * @param fieldName the name a field is submitted under
+     * @return the identifier of the root category of a choice field in category mode (mixin
+     *         {@code fmdbmix:categoryOptions} with {@code optionsRootCategory}), empty for any other field. The
+     *         submitted values of such a field are the node names of the direct children of that root.
+     */
+    public Optional<String> categoryRootOf(String fieldName) {
+        return Optional.ofNullable(categoryRootByName.get(fieldName));
     }
 
     /**

@@ -22,6 +22,9 @@ import java.util.List;
  * @param pageProperty         the property that receives a reference to the page of the form, or {@code null}
  * @param pairs                the companion-file rules
  * @param publish              whether to publish what is created
+ * @param categoryFields       the choice fields in category mode whose values fill {@code j:defaultCategory}
+ * @param pageCategories       whether {@code j:defaultCategory} also receives the categories of the page of the form
+ * @param profileProperties    the reference properties filled from the submitter's profile
  */
 public record Settings(
         String contentType,
@@ -36,6 +39,39 @@ public record Settings(
         String organizationProperty,
         String pageProperty,
         List<PairRule> pairs,
-        boolean publish
+        boolean publish,
+        List<CategoryField> categoryFields,
+        boolean pageCategories,
+        List<String> profileProperties
 ) {
+
+    public Settings {
+        categoryFields = categoryFields == null ? List.of() : List.copyOf(categoryFields);
+        profileProperties = profileProperties == null ? List.of() : List.copyOf(profileProperties);
+    }
+
+    /**
+     * Settings that use none of the category and profile sources.
+     *
+     * @param contentType          the node type to create
+     * @param groupPrefix          the prefix of the group that names the submitter's subfolder, or {@code null}
+     * @param titleField           the field that gives {@code jcr:title}, or {@code null}
+     * @param fieldMappings        {@code formField=property}
+     * @param fileMappings         {@code fileField=property}
+     * @param fileMixin            a mixin added to every stored file, or {@code null}
+     * @param fileProperties       {@code formField=fileProperty}
+     * @param fixedValues          {@code property=value}
+     * @param submitterProperty    the property that receives the user name, or {@code null}
+     * @param organizationProperty the property that receives the user's organization, or {@code null}
+     * @param pageProperty         the property that receives a reference to the page of the form, or {@code null}
+     * @param pairs                the companion-file rules
+     * @param publish              whether to publish what is created
+     */
+    public Settings(String contentType, String groupPrefix, String titleField, List<Mappings.Entry> fieldMappings,
+                    List<Mappings.Entry> fileMappings, String fileMixin, List<Mappings.Entry> fileProperties,
+                    List<Mappings.Entry> fixedValues, String submitterProperty, String organizationProperty, String pageProperty,
+                    List<PairRule> pairs, boolean publish) {
+        this(contentType, groupPrefix, titleField, fieldMappings, fileMappings, fileMixin, fileProperties, fixedValues,
+                submitterProperty, organizationProperty, pageProperty, pairs, publish, List.of(), false, List.of());
+    }
 }

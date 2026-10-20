@@ -51,6 +51,25 @@ public final class ValueConverter {
      * @throws ConversionException on a value that does not fit the type, or a type that is not filled from a field
      */
     public static List<Object> convert(PropertyShape shape, List<String> raw) throws ConversionException {
+        return convert(shape, raw, false);
+    }
+
+    /**
+     * Converts the values a visitor typed into a form field. Same as {@link #convert(PropertyShape, List)}, except that
+     * a rich-text string property ({@link PropertyShape#richText()}) receives the text as safe HTML
+     * ({@link PlainTextHtml}): the field is always plain text, never markup. Fixed values typed by the author in the
+     * mapping go through {@link #convert(PropertyShape, List)}, as typed.
+     *
+     * @param shape the property the field is mapped to
+     * @param raw   what the field submitted, may be {@code null}; blank values are ignored
+     * @return the converted values, empty when nothing is to be written
+     * @throws ConversionException on a value that does not fit the type, or a type that is not filled from a field
+     */
+    public static List<Object> convertSubmitted(PropertyShape shape, List<String> raw) throws ConversionException {
+        return convert(shape, raw, true);
+    }
+
+    private static List<Object> convert(PropertyShape shape, List<String> raw, boolean submitted) throws ConversionException {
         List<String> given = new ArrayList<>();
         if (raw != null) {
             for (String value : raw) {
@@ -65,7 +84,14 @@ public final class ValueConverter {
         List<String> used = shape.multiple() ? given : given.subList(0, 1);
         List<Object> converted = new ArrayList<>();
         for (String value : used) {
-            converted.add(convertOne(shape, value));
+            if (submitted && shape.richText() && shape.type() == PropertyType.STRING) {
+                String html = PlainTextHtml.of(value);
+                if (!html.isEmpty()) {
+                    converted.add(html);
+                }
+            } else {
+                converted.add(convertOne(shape, value));
+            }
         }
         return converted;
     }

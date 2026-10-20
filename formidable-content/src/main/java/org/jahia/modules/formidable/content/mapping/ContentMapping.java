@@ -22,6 +22,9 @@ import java.util.function.Function;
  *   {"target":"content","property":"submittedBy","source":"submitter"},
  *   {"target":"content","property":"company","source":"organization"},
  *   {"target":"content","property":"brief","source":"page"},
+ *   {"target":"content","property":"j:defaultCategory","source":"field","nodeId":"…","fieldName":"topic"},
+ *   {"target":"content","property":"j:defaultCategory","source":"pageCategories"},
+ *   {"target":"content","property":"authors","source":"submitterProfile"},
  *   {"target":"file","property":"credit","source":"field","fieldName":"credit"}
  * ]}
  * </pre>
@@ -48,7 +51,11 @@ public final class ContentMapping {
         /** The submitter's organization. */
         ORGANIZATION,
         /** A reference to the page the form was submitted from. */
-        PAGE
+        PAGE,
+        /** The {@code j:defaultCategory} values of the page the form was submitted from, copied as they are. */
+        PAGE_CATEGORIES,
+        /** The content of the submitter's profile (nodes carrying {@code fmdbcntmix:submitterProfile}), by reference. */
+        SUBMITTER_PROFILE
     }
 
     /**
@@ -85,13 +92,24 @@ public final class ContentMapping {
      * @param submitterProperty    the property receiving the user name, or {@code null}
      * @param organizationProperty the property receiving the organization, or {@code null}
      * @param pageProperty         the property receiving the page reference, or {@code null}
+     * @param categoryFields       the form fields (choice fields in category mode) whose values are categories of
+     *                             {@code j:defaultCategory}, in row order
+     * @param pageCategories       whether {@code j:defaultCategory} also receives the categories of the page the form was sent from
+     * @param profileProperties    the reference properties filled from the submitter's profile
      */
     public record Parts(String titleField, List<Mappings.Entry> fieldMappings, List<Mappings.Entry> fileMappings,
                         List<Mappings.Entry> fileProperties, List<Mappings.Entry> fixedValues, String submitterProperty,
-                        String organizationProperty, String pageProperty) {
+                        String organizationProperty, String pageProperty, List<String> categoryFields, boolean pageCategories,
+                        List<String> profileProperties) {
+        public Parts {
+            categoryFields = List.copyOf(categoryFields);
+            profileProperties = List.copyOf(profileProperties);
+        }
     }
 
     static final String TITLE = "jcr:title";
+    /** The property of {@code jmix:categorized}: valid on every content type, filled by the category sources only. */
+    public static final String CATEGORIES = "j:defaultCategory";
 
     private ContentMapping() {
     }
@@ -152,11 +170,14 @@ public final class ContentMapping {
     }
 
     private static <E extends Enum<E>> E parseEnum(Class<E> type, String value, String what, int number) throws ConfigException {
-        try {
-            return Enum.valueOf(type, value.trim().toUpperCase(Locale.ROOT));
-        } catch (IllegalArgumentException e) {
-            throw new ConfigException("Setting 'mapping': row " + number + " has the unknown " + what + " '" + value + "'", e);
+        // "pageCategories" and "submitterProfile" are spelled in camel case in the document: PAGE_CATEGORIES, SUBMITTER_PROFILE
+        String wanted = value.trim();
+        for (E candidate : type.getEnumConstants()) {
+            if (candidate.name().replace("_", "").equalsIgnoreCase(wanted)) {
+                return candidate;
+            }
         }
+        throw new ConfigException("Setting 'mapping': row " + number + " has the unknown " + what + " '" + value + "'");
     }
 
     /**
@@ -167,7 +188,8 @@ public final class ContentMapping {
      * @param fieldName resolves a field or files row to the submitted field name, empty when the field is gone
      * @return the parts
      * @throws ConfigException on a field that cannot be found, a source a target does not take, a property filled twice
-     *                         by the submitter, organization or page sources, or a constant row without a value
+     *                         by the submitter, organization or page sources, a constant row without a value, a source
+     *                         {@value #CATEGORIES} does not take, or the category sources on another property
      */
     public static Parts toParts(List<Row> rows, Function<Row, Optional<String>> fieldName) throws ConfigException {
         String titleField = null;
@@ -178,6 +200,9 @@ public final class ContentMapping {
         String submitter = null;
         String organization = null;
         String page = null;
+        List<String> categoryFields = new ArrayList<>();
+        boolean pageCategories = false;
+        List<String> profiles = new ArrayList<>();
         for (Row row : rows) {
             String field = row.readsField() ? fieldName.apply(row).orElseThrow(() -> new ConfigException(
                     "Setting 'mapping': the form field of '" + row.property() + "' (" + describe(row) + ") is not in the form any more"))
@@ -189,9 +214,15 @@ public final class ContentMapping {
                 fileProperties.add(new Mappings.Entry(field, row.property()));
                 continue;
             }
+            if (CATEGORIES.equals(row.property()) && row.source() != Source.FIELD && row.source() != Source.PAGE_CATEGORIES) {
+                throw new ConfigException("Setting 'mapping': " + CATEGORIES + " takes a choice field in category mode or the categories of the page, not '"
+                        + row.source().name().toLowerCase(Locale.ROOT) + "'");
+            }
             switch (row.source()) {
                 case FIELD -> {
-                    if (TITLE.equals(row.property())) {
+                    if (CATEGORIES.equals(row.property())) {
+                        categoryFields.add(field);
+                    } else if (TITLE.equals(row.property())) {
                         if (titleField != null) {
                             throw new ConfigException("Setting 'mapping': jcr:title is mapped from two fields");
                         }
@@ -212,9 +243,21 @@ public final class ContentMapping {
                 case SUBMITTER -> submitter = once(submitter, row, "submitter");
                 case ORGANIZATION -> organization = once(organization, row, "organization");
                 case PAGE -> page = once(page, row, "page");
+                case PAGE_CATEGORIES -> {
+                    if (!CATEGORIES.equals(row.property())) {
+                        throw new ConfigException("Setting 'mapping': the categories of the page fill " + CATEGORIES + " only, not '" + row.property() + "'");
+                    }
+                    pageCategories = true;
+                }
+                case SUBMITTER_PROFILE -> {
+                    if (profiles.contains(row.property())) {
+                        throw new ConfigException("Setting 'mapping': the profile of the submitter fills '" + row.property() + "' twice");
+                    }
+                    profiles.add(row.property());
+                }
             }
         }
-        return new Parts(titleField, fields, files, fileProperties, fixed, submitter, organization, page);
+        return new Parts(titleField, fields, files, fileProperties, fixed, submitter, organization, page, categoryFields, pageCategories, profiles);
     }
 
     private static String once(String current, Row row, String what) throws ConfigException {

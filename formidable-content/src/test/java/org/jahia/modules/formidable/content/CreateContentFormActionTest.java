@@ -56,7 +56,12 @@ class CreateContentFormActionTest {
     private final List<String> rows = new ArrayList<>();
     private String rawMapping;
     /** The fields of the form the action sits in: what a mapping row may name. */
-    private static final List<String> FORM_FIELDS = List.of("title", "summary", "media", "captions", "minutes");
+    private static final List<String> FORM_FIELDS = List.of("title", "summary", "media", "captions", "minutes", "topic", "region", "story");
+    /** The fields of the form that are choice fields in category mode, with the identifier of their root category. */
+    private final Map<String, String> categoryRoots = new HashMap<>();
+    private final Map<String, Map<String, String>> categoryChildren = new HashMap<>();
+    private final List<String> profilesFound = new ArrayList<>();
+    private final List<String> profileQueries = new ArrayList<>();
 
     /** An iterator over nodes, answering without stubbing (it is built inside other stubs' answers). */
     private static JCRNodeIteratorWrapper iterator(List<JCRNodeWrapper> nodes) {
@@ -157,6 +162,19 @@ class CreateContentFormActionTest {
         action.setCatalog(catalog);
         action.setWriter(writer);
         action.setSubmitters(submitters);
+        action.setCategories(root -> {
+            Map<String, String> children = categoryChildren.get(root);
+            if (children == null) {
+                throw new org.jahia.modules.formidable.content.mapping.ConfigException("no root " + root);
+            }
+            return children;
+        });
+        action.setProfiles((site, username, types) -> {
+            profileQueries.add(site + "|" + username + "|" + types);
+            return profilesFound;
+        });
+        categoryRoots.put("topic", "root-topics");
+        categoryChildren.put("root-topics", new HashMap<>(Map.of("sports", "id-sports", "culture", "id-culture")));
 
         values = new HashMap<>();
         values.put("title", List.of("Summer launch film"));
@@ -238,6 +256,13 @@ class CreateContentFormActionTest {
             when(field.getName()).thenReturn(name);
             when(field.getIdentifier()).thenReturn("id-" + name);
             when(field.isNodeType("fmdbmix:formElement")).thenReturn(true);
+            if (categoryRoots.containsKey(name)) {
+                when(field.isNodeType("fmdbmix:categoryOptions")).thenReturn(true);
+                when(field.hasProperty("optionsRootCategory")).thenReturn(true);
+                JCRPropertyWrapper root = mock(JCRPropertyWrapper.class);
+                when(root.getString()).thenReturn(categoryRoots.get(name));
+                when(field.getProperty("optionsRootCategory")).thenReturn(root);
+            }
             JCRNodeIteratorWrapper none = iterator(List.of());
             when(field.getNodes()).thenReturn(none);
             formFields.add(field);
@@ -508,5 +533,165 @@ class CreateContentFormActionTest {
     void theActionNeverAsksForSensitiveValuesAndIsRegisteredForItsType() {
         assertEquals("fmdbcnt:createContentAction", action.getNodeType());
         assertFalse(action.consumesSensitiveValues());
+    }
+
+    // ----- the story mapping: categories, rich text, the submitter's profile -----
+
+    private static TypedValueFinder plan(ContentPlan plan) {
+        return new TypedValueFinder(plan);
+    }
+
+    private record TypedValueFinder(ContentPlan plan) {
+        List<Object> values(String name) {
+            return plan.properties().stream().filter(v -> v.shape().name().equals(name)).findFirst().map(v -> v.values()).orElse(null);
+        }
+    }
+
+    @Test
+    void aChoiceFieldInCategoryModeFillsTheCategoriesWithTheChildrenOfItsRoot() throws Exception {
+        rows.add(row("j:defaultCategory", "field", "topic"));
+        values.put("topic", List.of("culture", "sports"));
+        action.execute(context());
+
+        ContentPlan plan = writer.plans.get(0);
+        assertEquals(List.of(new Reference("id-culture"), new Reference("id-sports")), plan(plan).values("j:defaultCategory"));
+        assertEquals(List.of("jmix:categorized"), plan.contentMixins());
+    }
+
+    @Test
+    void aCategoryTheRootDoesNotOfferRefusesTheSubmissionWithTheGenericSentence() throws Exception {
+        rows.add(row("j:defaultCategory", "field", "topic"));
+        values.put("topic", List.of("sports", "../../systemsite"));
+        FormActionException error = refused(422);
+        assertEquals(org.jahia.modules.formidable.content.messages.VisitorText.BAD_VALUE.in(Locale.ENGLISH), error.getVisitorMessage());
+        assertFalse(error.getMessage().contains("systemsite"), "what was typed stays out of the log");
+    }
+
+    @Test
+    void aCategoriesRowFromAFieldThatIsNotInCategoryModeIsAConfigurationError() throws Exception {
+        rows.add(row("j:defaultCategory", "field", "region"));
+        values.put("region", List.of("europe"));
+        FormActionException error = refused(503);
+        assertFalse(error.getVisitorMessage().contains("region"));
+    }
+
+    @Test
+    void aCategoryFieldWhoseRootIsGoneIsAConfigurationError() throws Exception {
+        rows.add(row("j:defaultCategory", "field", "topic"));
+        values.put("topic", List.of("sports"));
+        categoryChildren.clear();
+        refused(503);
+    }
+
+    @Test
+    void theCategoriesOfThePageTheFormWasSentFromAreCopiedAsTheyAre() throws Exception {
+        rows.add("{\"target\":\"content\",\"property\":\"j:defaultCategory\",\"source\":\"pageCategories\"}");
+        referer = "https://www.example.com/fr/sites/orvane/home/article.html";
+        readable.put("/sites/orvane/home/article", page("page-uuid", "cat-1", "cat-2"));
+        action.execute(context());
+
+        ContentPlan plan = writer.plans.get(0);
+        assertEquals(List.of(new Reference("cat-1"), new Reference("cat-2")), plan(plan).values("j:defaultCategory"));
+        assertEquals(List.of("jmix:categorized"), plan.contentMixins());
+    }
+
+    @Test
+    void theCategoriesOfThePageAndOfAFieldAreUnitedAndNoPageOrNoCategoryMeansNothing() throws Exception {
+        rows.add(row("j:defaultCategory", "field", "topic"));
+        rows.add("{\"target\":\"content\",\"property\":\"j:defaultCategory\",\"source\":\"pageCategories\"}");
+        values.put("topic", List.of("sports"));
+        referer = "https://www.example.com/sites/orvane/home/article.html";
+        readable.put("/sites/orvane/home/article", page("page-uuid", "cat-1", "id-sports"));
+        action.execute(context());
+        assertEquals(List.of(new Reference("id-sports"), new Reference("cat-1")), plan(writer.plans.get(0)).values("j:defaultCategory"));
+
+        // a page with no category, an unreadable page, no Referer: nothing from the page
+        readable.put("/sites/orvane/home/article", page("page-uuid"));
+        values.remove("topic");
+        action.execute(context());
+        assertNull(plan(writer.plans.get(1)).values("j:defaultCategory"));
+        referer = null;
+        action.execute(context());
+        assertNull(plan(writer.plans.get(2)).values("j:defaultCategory"));
+        assertTrue(writer.plans.get(2).contentMixins().isEmpty());
+    }
+
+    private JCRNodeWrapper page(String id, String... categoryIds) throws Exception {
+        existingNodes.add("/sites/orvane/home/article");
+        JCRNodeWrapper page = mock(JCRNodeWrapper.class);
+        when(page.isNodeType("jnt:page")).thenReturn(true);
+        when(page.getIdentifier()).thenReturn(id);
+        when(page.getPath()).thenReturn("/sites/orvane/home/article");
+        when(page.hasProperty("j:defaultCategory")).thenReturn(categoryIds.length > 0);
+        if (categoryIds.length > 0) {
+            JCRPropertyWrapper property = mock(JCRPropertyWrapper.class);
+            when(property.isMultiple()).thenReturn(true);
+            JCRValueWrapper[] wrappers = new JCRValueWrapper[categoryIds.length];
+            for (int i = 0; i < categoryIds.length; i++) {
+                wrappers[i] = mock(JCRValueWrapper.class);
+                when(wrappers[i].getString()).thenReturn(categoryIds[i]);
+            }
+            when(property.getValues()).thenReturn(wrappers);
+            when(page.getProperty("j:defaultCategory")).thenReturn(property);
+        }
+        return page;
+    }
+
+    @Test
+    void thePagesCategoriesAreNotReadWhenNoRowAsksForThem() throws Exception {
+        rows.add(row("brief", "page", null));
+        referer = "https://www.example.com/sites/orvane/home/article.html";
+        JCRNodeWrapper page = page("page-uuid", "cat-1");
+        readable.put("/sites/orvane/home/article", page);
+        action.execute(context());
+        org.mockito.Mockito.verify(page, org.mockito.Mockito.never()).hasProperty("j:defaultCategory");
+        assertNull(plan(writer.plans.get(0)).values("j:defaultCategory"));
+    }
+
+    @Test
+    void aFormFieldFillsARichTextPropertyAsEscapedParagraphs() throws Exception {
+        rows.add(row("body", "field", "story"));
+        values.put("story", List.of("Line one\nline two\n\n<script>alert(1)</script>"));
+        action.execute(context());
+        assertEquals(List.of("<p>Line one<br>line two</p><p>&lt;script&gt;alert(1)&lt;/script&gt;</p>"), plan(writer.plans.get(0)).values("body"));
+    }
+
+    @Test
+    void theSubmittersProfilesAreFoundInTheSiteOfTheContentFolderForTheTypesOfTheProperty() throws Exception {
+        rows.add(row("authors", "submitterProfile", null));
+        profilesFound.addAll(List.of("profile-ada"));
+        action.execute(context());
+
+        assertEquals(List.of("orvane|ada@northlight.example|[ctmd:author]"), profileQueries);
+        assertEquals(List.of(new Reference("profile-ada")), plan(writer.plans.get(0)).values("authors"));
+    }
+
+    @Test
+    void withoutAProfileTheStoryIsStillCreatedWithoutAuthors() throws Exception {
+        rows.add(row("authors", "submitterProfile", null));
+        action.execute(context());
+        assertEquals(1, writer.plans.size());
+        assertNull(plan(writer.plans.get(0)).values("authors"));
+    }
+
+    @Test
+    void aProfileSourceOnATextPropertyIsAConfigurationError() throws Exception {
+        rows.add(row("description", "submitterProfile", null));
+        refused(503);
+    }
+
+    @Test
+    void aSingleImageFromAnUploadFieldIsPlannedAndAPdfForItIsABadValue() throws Exception {
+        rows.add(row("image", "files", "media"));
+        rows.removeIf(json -> json.contains("\"property\":\"media\""));
+        uploads = new ArrayList<>(List.of(new SubmittedFile("media", "cover.png", "image/png", new byte[]{1})));
+        action.execute(context());
+        assertEquals(1, writer.plans.get(0).fileGroups().size());
+        assertEquals("image", writer.plans.get(0).fileGroups().get(0).property().name());
+
+        writer.plans.clear();
+        uploads = new ArrayList<>(List.of(new SubmittedFile("media", "brief.pdf", "application/pdf", new byte[]{1})));
+        FormActionException error = refused(422);
+        assertEquals(org.jahia.modules.formidable.content.messages.VisitorText.BAD_VALUE.in(Locale.ENGLISH), error.getVisitorMessage());
     }
 }

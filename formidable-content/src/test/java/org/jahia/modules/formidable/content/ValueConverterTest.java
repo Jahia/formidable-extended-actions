@@ -111,4 +111,28 @@ class ValueConverterTest {
         assertTrue(error.getMessage().contains("durationMinutes"));
         assertFalse(error.getMessage().contains("secret-text"));
     }
+
+    private static PropertyShape richText(boolean multiple) {
+        return new PropertyShape("body", PropertyType.STRING, multiple, true, true, List.of());
+    }
+
+    @Test
+    void aFieldFillingARichTextPropertyIsConvertedToEscapedHtml() throws ConversionException {
+        assertEquals(List.of("<p>a &lt;b&gt;<br>c</p><p>d</p>"), ValueConverter.convertSubmitted(richText(false), List.of("a <b>\nc\n\nd")));
+        assertEquals(List.of("<p>one</p>", "<p>two</p>"), ValueConverter.convertSubmitted(richText(true), List.of("one", "two")));
+        assertEquals(List.of("<p>one</p>"), ValueConverter.convertSubmitted(richText(false), List.of("one", "two")), "a single property takes the first");
+    }
+
+    @Test
+    void anEmptyRichTextWritesNothing() throws ConversionException {
+        assertEquals(List.of(), ValueConverter.convertSubmitted(richText(false), List.of("  \n ")));
+        assertEquals(List.of(), ValueConverter.convertSubmitted(richText(false), null));
+    }
+
+    @Test
+    void onlyAFormFieldIsConvertedAndOnlyForARichTextProperty() throws ConversionException {
+        assertEquals(List.of("<b>as typed</b>"), ValueConverter.convert(richText(false), List.of("<b>as typed</b>")), "a fixed value is the author's");
+        assertEquals(List.of("a <b>"), ValueConverter.convertSubmitted(single(PropertyType.STRING), List.of("a <b>")), "a plain string stays plain");
+        assertEquals(List.of(2L), ValueConverter.convertSubmitted(single(PropertyType.LONG), List.of("2")));
+    }
 }

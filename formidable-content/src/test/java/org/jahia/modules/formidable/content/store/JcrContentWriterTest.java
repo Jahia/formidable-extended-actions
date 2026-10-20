@@ -399,4 +399,83 @@ class JcrContentWriterTest {
         verify(fileNode, never()).setProperty(eq("j:width"), org.mockito.ArgumentMatchers.anyLong());
         verify(contentNode, org.mockito.Mockito.atLeastOnce()).setProperty(eq("media"), any(Value[].class));
     }
+
+    // ----- the story mapping: categories, a single image, images the JDK cannot read -----
+
+    private static final PropertyShape CATEGORIES = new PropertyShape("j:defaultCategory", PropertyType.WEAKREFERENCE, true, false);
+
+    private ContentPlan categorized(List<String> mixins, String... ids) {
+        List<Object> references = new ArrayList<>();
+        for (String id : ids) {
+            references.add(new Reference(id));
+            byIdentifier.putIfAbsent(id, mock(JCRNodeWrapper.class));
+        }
+        return new ContentPlan("ctmd:submission", BRIEFS, null, "Story", List.of(new TypedValue(CATEGORIES, references)), List.of(), null,
+                List.of(), false, List.of(Locale.ENGLISH), mixins);
+    }
+
+    @Test
+    void theCategorizedMixinIsAddedBeforeTheCategoriesAreSetAndTheyAreWeakReferences() throws Exception {
+        writer.create(categorized(List.of("jmix:categorized"), "id-sports", "id-culture"), submitter);
+
+        InOrder order = inOrder(contentNode);
+        order.verify(contentNode).addMixin("jmix:categorized");
+        ArgumentCaptor<Value[]> values = ArgumentCaptor.forClass(Value[].class);
+        order.verify(contentNode).setProperty(eq("j:defaultCategory"), values.capture());
+        assertEquals(2, values.getValue().length, "the union of the categories, one value each");
+        verify(factory, times(2)).createValue(any(javax.jcr.Node.class), eq(true));
+    }
+
+    @Test
+    void aNodeThatAlreadyHasTheMixinIsNotGivenItAgainAndNoMixinMeansNone() throws Exception {
+        when(contentNode.isNodeType("jmix:categorized")).thenReturn(true);
+        writer.create(categorized(List.of("jmix:categorized"), "id-sports"), submitter);
+        verify(contentNode, never()).addMixin(anyString());
+
+        org.mockito.Mockito.clearInvocations(contentNode);
+        when(contentNode.isNodeType("jmix:categorized")).thenReturn(false);
+        writer.create(categorized(List.of(), "id-sports"), submitter);
+        verify(contentNode, never()).addMixin(anyString());
+    }
+
+    @Test
+    void aCategoryThatNoLongerExistsIsLeftOutAndTheStoryKept() throws Exception {
+        ContentPlan plan = new ContentPlan("ctmd:submission", BRIEFS, null, "Story",
+                List.of(new TypedValue(CATEGORIES, List.of(new Reference("deleted-category")))), List.of(), null, List.of(), false,
+                List.of(Locale.ENGLISH), List.of("jmix:categorized"));
+        assertEquals("content-1", writer.create(plan, submitter).identifier());
+        verify(contentNode, never()).setProperty(eq("j:defaultCategory"), any(Value[].class));
+    }
+
+    @Test
+    void aFileForASingleWeakReferenceIsWrittenAsOneValuePointingAtTheStoredImage() throws Exception {
+        when(filesFolder.addNode("cover.png", "jnt:file")).thenReturn(fileNode);
+        PropertyShape image = new PropertyShape("image", PropertyType.WEAKREFERENCE, false, false, false, List.of("jmix:image"));
+        List<FileGroup> groups = List.of(new FileGroup(image, List.of(new SubmittedFile("cover", "Cover.png", "image/png", new byte[]{1, 2, 3}))));
+        writer.create(new ContentPlan("ctmd:submission", BRIEFS, FILES, "Story", List.of(), groups, null, List.of(), false,
+                List.of(Locale.ENGLISH)), submitter);
+
+        verify(fileNode).addMixin("jmix:image");
+        verify(factory).createValue(fileNode, true);
+        verify(contentNode).setProperty(eq("image"), any(Value.class));
+        verify(contentNode, never()).setProperty(eq("image"), any(Value[].class));
+        // the image mixin is on the stored file before the content that is constrained to it is saved
+        InOrder order = inOrder(fileNode, contentNode);
+        order.verify(fileNode).addMixin("jmix:image");
+        order.verify(contentNode).setProperty(eq("image"), any(Value.class));
+    }
+
+    @Test
+    void everyImageTypeIsAnImageEvenWhenTheJdkCannotReadItsSize() throws Exception {
+        when(filesFolder.addNode(anyString(), eq("jnt:file"))).thenReturn(fileNode);
+        PropertyShape image = new PropertyShape("image", PropertyType.WEAKREFERENCE, false, false, false, List.of("jmix:image"));
+        for (String mime : new String[]{"image/webp", "image/svg+xml"}) {
+            org.mockito.Mockito.clearInvocations(fileNode);
+            List<FileGroup> groups = List.of(new FileGroup(image, List.of(new SubmittedFile("cover", "cover.x", mime, new byte[]{1, 2, 3}))));
+            writer.create(new ContentPlan("ctmd:submission", BRIEFS, FILES, "Story", List.of(), groups, null, List.of(), false,
+                    List.of(Locale.ENGLISH)), submitter);
+            verify(fileNode).addMixin("jmix:image");
+            verify(fileNode, never()).setProperty(eq("j:width"), org.mockito.ArgumentMatchers.anyLong());
+        }
+    }
 }

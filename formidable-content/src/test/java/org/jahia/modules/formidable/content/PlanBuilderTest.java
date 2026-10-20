@@ -5,13 +5,17 @@ import org.jahia.modules.formidable.content.convert.TypedValue;
 import org.jahia.modules.formidable.content.mapping.ConfigException;
 import org.jahia.modules.formidable.content.mapping.Mappings;
 import org.jahia.modules.formidable.content.mapping.PairRule;
+import org.jahia.modules.formidable.content.plan.CategoryField;
 import org.jahia.modules.formidable.content.plan.ContentPlan;
 import org.jahia.modules.formidable.content.plan.PlanBuilder;
 import org.jahia.modules.formidable.content.plan.Settings;
 import org.jahia.modules.formidable.content.plan.ValueException;
+import org.jahia.modules.formidable.content.platform.Categories;
+import org.jahia.modules.formidable.content.platform.SubmitterProfiles;
 import org.jahia.modules.formidable.engine.api.SubmittedFile;
 import org.junit.jupiter.api.Test;
 
+import javax.jcr.RepositoryException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -46,11 +50,15 @@ class PlanBuilderTest {
         String page = "brief";
         List<String> pairs = new ArrayList<>(List.of("captions<-media:video/*"));
         boolean publish = true;
+        List<CategoryField> categoryFields = new ArrayList<>();
+        boolean pageCategories;
+        List<String> profiles = new ArrayList<>();
 
         Settings build() throws ConfigException {
             return new Settings(type, "orvane-supplier-", titleField, Mappings.parse("fieldMappings", fields),
                     Mappings.parse("fileMappings", fileMappings), fileMixin, Mappings.parse("fileProperties", fileProperties),
-                    Mappings.parse("fixedValues", fixed), submitter, organization, page, PairRule.parse(pairs), publish);
+                    Mappings.parse("fixedValues", fixed), submitter, organization, page, PairRule.parse(pairs), publish,
+                    categoryFields, pageCategories, profiles);
         }
     }
 
@@ -332,5 +340,319 @@ class PlanBuilderTest {
         S s = new S();
         s.publish = false;
         assertFalse(build(s, values(), films(), null).publish());
+    }
+
+    // ----- categories, rich text, the submitter's profile, single references (the story mapping) -----
+
+    /** The categories of the site: two roots, each with its direct children by node name. */
+    private static final class FakeCategories implements Categories {
+        final Map<String, Map<String, String>> roots = new HashMap<>(Map.of(
+                "root-topics", new java.util.LinkedHashMap<>(Map.of("sports", "id-sports", "culture", "id-culture")),
+                "root-regions", new java.util.LinkedHashMap<>(Map.of("europe", "id-europe"))));
+        final List<String> asked = new ArrayList<>();
+
+        @Override
+        public Map<String, String> childCategories(String rootIdentifier) throws ConfigException {
+            asked.add(rootIdentifier);
+            Map<String, String> children = roots.get(rootIdentifier);
+            if (children == null) {
+                throw new ConfigException("no such root");
+            }
+            return children;
+        }
+    }
+
+    /** The profiles of the site: what is found for a user, and what was asked. */
+    private static final class FakeProfiles implements SubmitterProfiles {
+        List<String> found = List.of();
+        RepositoryException failure;
+        final List<String> asked = new ArrayList<>();
+        List<String> constraints;
+
+        @Override
+        public List<String> find(String siteKey, String username, List<String> nodeTypes) throws RepositoryException {
+            if (failure != null) {
+                throw failure;
+            }
+            asked.add(siteKey + "|" + username);
+            constraints = nodeTypes;
+            return found;
+        }
+    }
+
+    private final FakeCategories categories = new FakeCategories();
+    private final FakeProfiles profiles = new FakeProfiles();
+
+    private ContentPlan buildWith(S s, Map<String, List<String>> values, List<SubmittedFile> files, PlanBuilder.Page page)
+            throws ConfigException, ValueException {
+        return PlanBuilder.build(s.build(), new PlanBuilder.Submission(values, files), WHO, page, TARGET, LANGUAGES, CATALOG,
+                new PlanBuilder.Lookups(categories, profiles));
+    }
+
+    private static S withTopic() {
+        S s = new S();
+        s.categoryFields.add(new CategoryField("topic", "root-topics"));
+        return s;
+    }
+
+    private static List<Object> refs(String... ids) {
+        List<Object> refs = new ArrayList<>();
+        for (String id : ids) {
+            refs.add(new Reference(id));
+        }
+        return refs;
+    }
+
+    @Test
+    void theNodeNamesOfACategoryFieldBecomeReferencesToThoseCategoriesAndTheMixinIsAdded() throws Exception {
+        Map<String, List<String>> values = values();
+        values.put("topic", List.of("culture", "sports"));
+        ContentPlan plan = buildWith(withTopic(), values, films(), PlanBuilder.Page.NONE);
+
+        TypedValue categories = property(plan, "j:defaultCategory");
+        assertEquals(refs("id-culture", "id-sports"), categories.values());
+        assertTrue(categories.shape().isWeak() && categories.shape().multiple());
+        assertEquals(List.of("jmix:categorized"), plan.contentMixins());
+    }
+
+    @Test
+    void aCategoryValueThatTheRootDoesNotOfferRefusesTheSubmissionAndNeverCreatesOne() throws Exception {
+        for (String bad : new String[]{"unknown", "SPORTS", "../culture", "/sites/systemsite/categories/topics/sports", "topics/sports",
+                "sports/..", "sports[2]", "*", "jcr:content"}) {
+            Map<String, List<String>> values = values();
+            values.put("topic", List.of("sports", bad));
+            ValueException error = assertThrows(ValueException.class, () -> buildWith(withTopic(), values, films(), PlanBuilder.Page.NONE), bad);
+            assertEquals(ValueException.Kind.BAD_VALUE, error.kind(), bad);
+            assertTrue(error.getMessage().contains("topic"), "the log names the field");
+            assertFalse(error.getMessage().contains(bad), "and never what was typed: " + bad);
+        }
+    }
+
+    @Test
+    void aCategoryNameIsTrimmedAndBlankValuesAreIgnored() throws Exception {
+        Map<String, List<String>> values = values();
+        values.put("topic", List.of(" sports ", "", "  "));
+        assertEquals(refs("id-sports"), property(buildWith(withTopic(), values, films(), PlanBuilder.Page.NONE), "j:defaultCategory").values());
+    }
+
+    @Test
+    void nothingSubmittedForTheCategoriesWritesNoPropertyAndNoMixin() throws Exception {
+        ContentPlan plan = buildWith(withTopic(), values(), films(), PlanBuilder.Page.NONE);
+        assertNull(property(plan, "j:defaultCategory"));
+        assertTrue(plan.contentMixins().isEmpty());
+    }
+
+    @Test
+    void severalCategoryFieldsAndThePagesCategoriesAreUnitedWithoutDuplicates() throws Exception {
+        S s = withTopic();
+        s.categoryFields.add(new CategoryField("region", "root-regions"));
+        s.categoryFields.add(new CategoryField("topic2", "root-topics"));
+        s.pageCategories = true;
+        Map<String, List<String>> values = values();
+        values.put("topic", List.of("sports"));
+        values.put("region", List.of("europe"));
+        values.put("topic2", List.of("sports", "culture"));
+        ContentPlan plan = buildWith(s, values, films(), new PlanBuilder.Page("page-uuid", List.of("id-culture", "id-page-only")));
+
+        assertEquals(refs("id-sports", "id-europe", "id-culture", "id-page-only"), property(plan, "j:defaultCategory").values());
+        assertEquals(List.of("root-topics", "root-regions"), categories.asked, "each root is read once, whatever the number of fields");
+    }
+
+    @Test
+    void thePagesCategoriesAreCopiedAsTheyAreAndNoPageOrNoCategoryMeansNothing() throws Exception {
+        S s = new S();
+        s.pageCategories = true;
+        ContentPlan plan = buildWith(s, values(), films(), new PlanBuilder.Page("page-uuid", List.of("id-a", "id-b")));
+        assertEquals(refs("id-a", "id-b"), property(plan, "j:defaultCategory").values());
+        assertEquals(List.of("jmix:categorized"), plan.contentMixins());
+
+        for (PlanBuilder.Page none : new PlanBuilder.Page[]{PlanBuilder.Page.NONE, new PlanBuilder.Page("page-uuid", List.of())}) {
+            ContentPlan empty = buildWith(s, values(), films(), none);
+            assertNull(property(empty, "j:defaultCategory"));
+            assertTrue(empty.contentMixins().isEmpty());
+        }
+        assertTrue(categories.asked.isEmpty(), "the page's categories never go through a root");
+    }
+
+    @Test
+    void aTypeThatIsAlreadyCategorizedGetsNoMixin() throws Exception {
+        Fakes.Catalog categorized = new Fakes.Catalog();
+        categorized.categorizedTypes.add(Fakes.Catalog.CONTENT_TYPE);
+        S s = new S();
+        s.pageCategories = true;
+        ContentPlan plan = PlanBuilder.build(s.build(), new PlanBuilder.Submission(values(), films()), WHO,
+                new PlanBuilder.Page("page-uuid", List.of("id-a")), TARGET, LANGUAGES, categorized, new PlanBuilder.Lookups(categories, profiles));
+        assertEquals(refs("id-a"), property(plan, "j:defaultCategory").values());
+        assertTrue(plan.contentMixins().isEmpty());
+    }
+
+    @Test
+    void aBrokenRootIsAConfigurationError() {
+        S s = new S();
+        s.categoryFields.add(new CategoryField("topic", "root-gone"));
+        assertThrows(ConfigException.class, () -> buildWith(s, values(), films(), PlanBuilder.Page.NONE));
+    }
+
+    @Test
+    void theCategoriesNeedTheCategorizedMixinToBeInstalled() {
+        Fakes.Catalog without = new Fakes.Catalog() {
+            @Override
+            public java.util.Optional<org.jahia.modules.formidable.content.convert.PropertyShape> property(List<String> types, String name) {
+                return name.equals("j:defaultCategory") ? java.util.Optional.empty() : super.property(types, name);
+            }
+        };
+        S s = new S();
+        s.pageCategories = true;
+        assertThrows(ConfigException.class, () -> PlanBuilder.build(settings(s), new PlanBuilder.Submission(values(), films()), WHO,
+                new PlanBuilder.Page("p", List.of("c")), TARGET, LANGUAGES, without, new PlanBuilder.Lookups(categories, profiles)));
+    }
+
+    @Test
+    void withoutLookupsTheCategorySourcesAreAConfigurationError() {
+        S s = withTopic();
+        assertThrows(ConfigException.class, () -> build(s, values(), films(), null));
+    }
+
+    @Test
+    void aRichTextPropertyReceivesTheTextOfAFieldAsEscapedParagraphsAndTheFixedValueAsTyped() throws Exception {
+        S s = new S();
+        s.fields.add("story=body");
+        s.fields.add("tease=teaser");
+        Map<String, List<String>> values = values();
+        values.put("story", List.of("First <script>alert('x')</script> & more\nsame paragraph\n\nSecond \"one\""));
+        values.put("tease", List.of("one", "two"));
+        ContentPlan plan = build(s, values, films(), null);
+
+        assertEquals(List.of("<p>First &lt;script&gt;alert(&#39;x&#39;)&lt;/script&gt; &amp; more<br>same paragraph</p><p>Second &quot;one&quot;</p>"),
+                property(plan, "body").values());
+        assertEquals(List.of("<p>one</p>", "<p>two</p>"), property(plan, "teaser").values());
+        assertEquals(List.of("A 30 second film"), property(plan, "description").values(), "an ordinary string stays plain text");
+
+        S fixed = new S();
+        fixed.fixed.add("body=<b>typed by the author</b>");
+        assertEquals(List.of("<b>typed by the author</b>"), property(build(fixed, values(), films(), null), "body").values(),
+                "an author's fixed value is not a visitor's text: it is not touched");
+    }
+
+    @Test
+    void aBlankRichTextFieldWritesNothing() throws Exception {
+        S s = new S();
+        s.fields.add("story=body");
+        Map<String, List<String>> values = values();
+        values.put("story", List.of(" \n \r\n\n "));
+        assertNull(property(build(s, values, films(), null), "body"));
+    }
+
+    @Test
+    void theProfilesOfTheSubmitterAreReferencedWithTheTypesThePropertyAccepts() throws Exception {
+        S s = new S();
+        s.profiles.add("authors");
+        profiles.found = List.of("id-ada", "id-bob");
+        ContentPlan plan = buildWith(s, values(), films(), PlanBuilder.Page.NONE);
+
+        assertEquals(refs("id-ada", "id-bob"), property(plan, "authors").values());
+        assertEquals(List.of("orvane|ada@northlight.example"), profiles.asked, "the site of the content folder, the platform's user name");
+        assertEquals(List.of("ctmd:author"), profiles.constraints);
+    }
+
+    @Test
+    void aSingleReferenceTakesTheOnlyProfileAndNothingWhenSeveralFitOrNoneDoes() throws Exception {
+        S s = new S();
+        s.profiles.add("editor");
+        profiles.found = List.of("id-ada");
+        assertEquals(refs("id-ada"), property(buildWith(s, values(), films(), PlanBuilder.Page.NONE), "editor").values());
+        profiles.found = List.of("id-ada", "id-bob");
+        assertNull(property(buildWith(s, values(), films(), PlanBuilder.Page.NONE), "editor"), "several for a single property: none, never a guess");
+        profiles.found = List.of();
+        assertNull(property(buildWith(s, values(), films(), PlanBuilder.Page.NONE), "editor"));
+    }
+
+    @Test
+    void noProfileWritesNothingAndIsNotAnError() throws Exception {
+        S s = new S();
+        s.profiles.add("authors");
+        ContentPlan plan = buildWith(s, values(), films(), PlanBuilder.Page.NONE);
+        assertNull(property(plan, "authors"));
+    }
+
+    @Test
+    void theProfileSourceFillsReferencePropertiesOnlyAndAloneAndInAKnownSite() {
+        S text = new S();
+        text.profiles.add("description");
+        assertThrows(ConfigException.class, () -> buildWith(text, values(), films(), PlanBuilder.Page.NONE));
+        S unknown = new S();
+        unknown.profiles.add("nosuch");
+        assertThrows(ConfigException.class, () -> buildWith(unknown, values(), films(), PlanBuilder.Page.NONE));
+        S twice = new S();
+        twice.profiles.add("brief");
+        assertThrows(ConfigException.class, () -> buildWith(twice, values(), films(), PlanBuilder.Page.NONE), "the page property is filled by the page source");
+        S files = new S();
+        files.profiles.add("media");
+        assertThrows(ConfigException.class, () -> buildWith(files, values(), films(), PlanBuilder.Page.NONE), "the files fill media");
+    }
+
+    @Test
+    void theProfilesAreLookedUpOnlyInTheSiteOfTheFolderAndOnlyIfItIsAPlainKey() {
+        S s = new S();
+        s.profiles.add("authors");
+        for (String path : new String[]{"/content/briefs", "/sites", "/sites/", "/sites/or vane/x", "/sites/x'y/z", "/sites/..", "/sitesx/a/b"}) {
+            PlanBuilder.Target odd = new PlanBuilder.Target(path, null);
+            assertThrows(ConfigException.class, () -> PlanBuilder.build(settings(s), new PlanBuilder.Submission(values(), List.of()), WHO,
+                    PlanBuilder.Page.NONE, odd, LANGUAGES, CATALOG, new PlanBuilder.Lookups(categories, profiles)), path);
+        }
+        assertTrue(profiles.asked.isEmpty(), "no query ran");
+    }
+
+    @Test
+    void aRepositoryFailureWhileLookingUpTheProfileRefusesRatherThanWriteWithoutAuthors() {
+        S s = new S();
+        s.profiles.add("authors");
+        profiles.failure = new RepositoryException("down");
+        assertThrows(ConfigException.class, () -> buildWith(s, values(), films(), PlanBuilder.Page.NONE));
+    }
+
+    @Test
+    void aFileForASingleWeakReferenceIsKeptWhenItSatisfiesTheConstraintAndItsGroupHoldsIt() throws Exception {
+        S s = new S();
+        s.fileMappings.add("cover=image");
+        for (String mime : new String[]{"image/png", "image/jpeg", "image/webp", "image/svg+xml"}) {
+            ContentPlan plan = build(s, values(), List.of(file("cover", "cover.x", mime)), null);
+            FileGroupHolder group = new FileGroupHolder(plan, "image");
+            assertEquals(1, group.files(), mime);
+        }
+    }
+
+    /** The group of a plan for a property. */
+    private record FileGroupHolder(ContentPlan plan, String property) {
+        int files() {
+            return plan.fileGroups().stream().filter(group -> group.property().name().equals(property)).mapToInt(group -> group.files().size()).sum();
+        }
+    }
+
+    @Test
+    void aFileThatCannotBeTheTargetsTypeIsABadValueNotAServerError() {
+        S s = new S();
+        s.fileMappings.add("cover=image");
+        for (String mime : new String[]{"application/pdf", "video/mp4", "text/plain"}) {
+            ValueException error = assertThrows(ValueException.class, () -> build(s, values(), List.of(file("cover", "cover.x", mime)), null), mime);
+            assertEquals(ValueException.Kind.BAD_VALUE, error.kind());
+            assertTrue(error.getMessage().contains("image"));
+        }
+    }
+
+    @Test
+    void twoFilesForTheSingleImageAreStillRefused() {
+        S s = new S();
+        s.fileMappings.add("cover=image");
+        assertThrows(ValueException.class, () -> build(s, values(),
+                List.of(file("cover", "a.png", "image/png"), file("cover", "b.png", "image/png")), null));
+    }
+
+    @Test
+    void aPropertyWithoutConstraintTakesAnyFile() throws Exception {
+        S s = new S();
+        s.fileMappings.add("cover=anyone");
+        assertEquals(1, new FileGroupHolder(build(s, values(), List.of(file("cover", "a.pdf", "application/pdf")), null), "anyone").files(),
+                "no constraint: any file");
     }
 }

@@ -12,6 +12,7 @@ import java.util.ResourceBundle;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -101,6 +102,40 @@ class ResourceBundlesTest {
                 assertNotNull(in, name);
                 String text = new String(in.readAllBytes(), StandardCharsets.UTF_8);
                 assertTrue(text.chars().allMatch(c -> c < 128), name + " is ASCII");
+            }
+        }
+    }
+
+    @Test
+    void theSubmitterProfileMixinHasItsLabelsAndTooltipsInEveryLanguageAndIsAddableToAnyContent() throws IOException {
+        // the mixin, its one property and the way an editor adds it: declared in definitions.cnd before the action type
+        String all;
+        try (InputStream in = ResourceBundlesTest.class.getResourceAsStream("/META-INF/definitions.cnd")) {
+            assertNotNull(in);
+            all = new String(in.readAllBytes(), StandardCharsets.UTF_8);
+        }
+        int start = all.indexOf("[fmdbcntmix:submitterProfile] mixin");
+        assertTrue(start >= 0, "the mixin is declared");
+        String body = all.substring(start, all.indexOf("[fmdbcnt:createContentAction]"));
+        assertTrue(body.contains("extends = jnt:content") && body.contains("itemtype = content"), "addable to any content in the Content Editor");
+        assertTrue(body.contains("- submitterUser (string) indexed=untokenized"), "searchable by exact user name");
+        assertFalse(body.contains("hidden"), "editors set it");
+        assertTrue(all.contains("<fmdbcntmix = 'http://www.jahia.org/jahia/fmdbcnt/mix/1.0'>"));
+        assertTrue(all.indexOf("<fmdbcntmix") < all.indexOf("[fmdbcntmix:submitterProfile]"));
+
+        List<String> mixinKeys = List.of("fmdbcntmix_submitterProfile", "fmdbcntmix_submitterProfile.ui.tooltip",
+                "fmdbcntmix_submitterProfile.submitterUser", "fmdbcntmix_submitterProfile.submitterUser.ui.tooltip");
+        ResourceBundle english = bundle(Locale.ENGLISH);
+        assertEquals("Submitter profile", english.getString("fmdbcntmix_submitterProfile"));
+        assertEquals("Submitter profile: user name", english.getString("fmdbcntmix_submitterProfile.submitterUser"));
+        for (Locale locale : new Locale[]{Locale.ENGLISH, Locale.FRENCH, PORTUGUESE}) {
+            ResourceBundle bundle = bundle(locale);
+            for (String key : mixinKeys) {
+                assertTrue(bundle.containsKey(key), key + " is missing in " + locale);
+                assertFalse(bundle.getString(key).isBlank(), key + " is blank in " + locale);
+                if (!locale.equals(Locale.ENGLISH)) {
+                    assertNotEquals(english.getString(key), bundle.getString(key), key + " is not translated in " + locale);
+                }
             }
         }
     }

@@ -36,6 +36,24 @@ PIDs, GraphQL fields, selector types and module ids are those of the separate mo
   `pageProperty`. A field is remembered by node, field key and name: a renamed field keeps its row. The content type and the
   file mixin are chosen from the types of the site's modules (`formidableContentTypes`, `formidableContentFileMixins`).
 
+* **Content stories** - the Create content mapping fills a full editorial story (`docs/content.md`, "Stories"):
+  * **Categories**: a **Categories** row (`j:defaultCategory`, listed for every content type; the action adds
+    `jmix:categorized`) filled from a choice field in category mode (`fmdbmix:categoryOptions`: the submitted node names are
+    looked up among the direct `jnt:category` children of the field's root, read as the system user in live; an unknown name
+    refuses the submission, a category is never created) and/or from the page's own categories (`source: "pageCategories"`,
+    copied as they are); several rows are united.
+  * **Rich text**: a form field that fills a rich-text property (`richtext` selector) is converted from plain text to escaped
+    HTML (`<p>` per blank-line paragraph, `<br>` for a single break).
+  * **The submitter's profile**: the mixin `fmdbcntmix:submitterProfile` (`submitterUser`, addable to any content in the Content
+    Editor; labels and tooltips in English, French and Portuguese) and the row source `submitterProfile`, which references the
+    submitter's profile content (a bound JCR-SQL2 query under `/sites/<site of the content folder>`, node type constraints
+    applied; none found writes nothing; several for a single property write none).
+  * **A single image**: a file stored for a single weak reference with a node type constraint (`image < jmix:image`) is checked
+    against it before the write (a PDF is refused with the invalid-value sentence instead of failing the save); every `image/*`
+    file is stored as a `jmix:image`, also WebP and SVG, which the JDK cannot size.
+  * The selector offers the Categories row, the two category sources and the profile source, and its labels are shipped in
+    English, French and Portuguese (`locales/pt.json` is new).
+
 ### Changes against the separate modules
 
 * **Six independent modules**, not one bundle: `formidable-accounts`, `formidable-content`, `formidable-redirect`, `formidable-salesforce`,

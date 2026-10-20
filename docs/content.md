@@ -17,6 +17,7 @@ endpoint of its own (the form is submitted through the engine's endpoint). Java 
 - [Configure the action (author)](#configure-the-action-author)
 - [The mapping](#the-mapping)
 - [Files](#files)
+- [Stories: categories, rich text, the submitter's profile](#stories-categories-rich-text-the-submitters-profile)
 - [The security model](#the-security-model)
 - [A worked example](#a-worked-example)
 - [Troubleshooting](#troubleshooting)
@@ -70,6 +71,8 @@ definition declares them; protected and hidden ones never), each with a **Filled
 | **The person who submits** | a single text property | Their user name |
 | **Their organization** | a single text property | The `j:organization` of their account |
 | **The page the form was sent from** | a single reference property | A reference to that page (read from the request, checked: a page or main resource of the site the submitter can read) |
+| **The submitter's profile** | a reference or weakreference property, single or multiple | References to the content that carries the submitter's profile (see [Stories](#stories-categories-rich-text-the-submitters-profile)) |
+| **Categories** (the **Categories** row, listed last for every content type) | `j:defaultCategory` | The categories of a choice field in category mode, or the categories of the page the form was sent from (see [Stories](#stories-categories-rich-text-the-submitters-profile)) |
 
 Below, **The stored files** lists the properties of `jnt:file` and of the file mixin, each filled from a form field (the credit
 line written on every file, for instance). A property marked `*` is mandatory: the editor warns while it is not mapped.
@@ -89,6 +92,8 @@ A **form field** is converted to the type the property's definition declares:
 | boolean | `true`, `false`, `on`, `off`, `yes`, `no`, `1`, `0` |
 | date | `yyyy-MM-dd` (what a date field sends), stored as the start of that day in UTC |
 | multiple property | Every value of the field (a checkbox group); a single property takes the first |
+
+A form field that fills a **rich-text** property (selector `richtext`) is converted to safe HTML, see [Stories](#stories-categories-rich-text-the-submitters-profile).
 
 A field left blank writes nothing. A value that does not fit refuses the submission with "one of the values you entered is
 not valid" (the log says which field, never what was typed). A property that the type does not declare, a protected one, one of
@@ -118,6 +123,121 @@ Files of an upload field the mapping does not use are not stored. **Required com
 that when `media` holds *n* files whose detected type matches the pattern (`video/mp4`, `video/*`, `*/*`),
 `captions` must hold at least *n* files; otherwise the submission is refused with your sentence (or a generic one) before
 anything is written.
+
+## Stories: categories, rich text, the submitter's profile
+
+A form for an editorial story (a supplier sends an article with its image, its topics and its authors) uses four more things
+of the mapping. None of them lets a submitted value choose a node or a path.
+
+### Categories
+
+The mapping lists a **Categories** row (`j:defaultCategory`) for **every** content type, although the type does not declare the
+property: the action adds the mixin `jmix:categorized` to the content (unless the type already is one) before it sets the
+property, a multiple weak reference to the chosen categories. Two sources fill it; the values of every categories row are
+united, without duplicates:
+
+```json
+{"target":"content","property":"j:defaultCategory","source":"field","nodeId":"…","fieldKey":"…","fieldName":"topic"}
+{"target":"content","property":"j:defaultCategory","source":"pageCategories"}
+```
+
+- **A choice field in category mode** (`source: "field"`): the field carries the mixin `fmdbmix:categoryOptions` and a root category
+  (`optionsRootCategory`). Formidable offers the direct children of that root, and the value the visitor sends is the child's
+  **node name**. The action reads the children of the root (a system session, the `live` workspace, so the categories the
+  visitor was offered) and looks each value up among them by name. An unknown value refuses the submission with the visitor
+  sentence of an invalid value; a category is **never created**. A value is compared with the children's names, never used
+  as a path: `../x`, `a/b`, a path or `name[2]` match nothing. A categories row that reads a field that is not in category
+  mode (or whose root is gone or not published) is a configuration error ("temporarily unavailable").
+- **The page's own categories** (`source: "pageCategories"`): the `j:defaultCategory` values of the page the form was sent
+  from, found and read exactly as the **page** source does (live, readable by the submitter), copied as they are. No page, or a
+  page without categories: nothing.
+
+Nothing to write (no value submitted, no page category) writes neither the property nor the mixin. The selector's categories row
+offers only the choice fields in category mode.
+
+### Rich text
+
+When the target property is a rich-text string (its selector is `richtext`) and the source is a **form field**, the action
+turns the plain text the visitor typed into HTML: `&`, `<`, `>`, `"` and `'` are escaped, blank lines separate `<p>`
+paragraphs, a single line break inside a paragraph becomes `<br>`. `a < b` and `<script>` give
+`<p>a &lt; b</p>` and `<p>&lt;script&gt;</p>`. A text with no visible character writes nothing. A form field is **always** text:
+there is no field whose value is meant as HTML. The same conversion applies to a file property filled from a field. A **fixed
+value** typed in the mapping by the author is not converted (it is the author's, not a visitor's). Where the
+`html-filtering` module is installed, it still filters what is saved, as for any rich text.
+
+### The submitter's profile
+
+A story's authors are content, not text. The module declares a mixin, `fmdbcntmix:submitterProfile`, with one property,
+`submitterUser` (label "Submitter profile: user name"): an editor adds it to the content that stands for a person (an author
+page, a contributor card) in the Content Editor (it extends `jnt:content`) and types the person's Jahia user name.
+
+```json
+{"target":"content","property":"authors","source":"submitterProfile"}
+```
+
+For a reference or weakreference property, single or multiple, the source **The submitter's profile** finds the nodes that
+carry the mixin with the submitter's user name, writes references to them and nothing else:
+
+- the query is a bound JCR-SQL2 query, `ISDESCENDANTNODE` of `/sites/<site>` where the site is the one of the **content folder**
+  (the folder the author of the action configured: it must be under `/sites/<site key>`, or the action is misconfigured), run as the
+  system user in the `default` workspace;
+- only the profiles that satisfy the property's value constraints (the node types of the definition, for example a
+  `jnt:person` or a `ctmd:author`; any one is enough) are kept;
+- a **single** property takes the profile when exactly one fits; **several** fit: none is written and a warning is logged
+  (the action never guesses); a **multiple** property takes them all (at most 50 candidates are read);
+- none found: nothing is written and the log says so at info level; the story is still created. The profile content must be
+  **published** for the reference to resolve in live.
+
+The profile source cannot share a property with the page source or a files row (configuration error).
+
+### A single image
+
+A **files** row that targets a single weak reference with a node type constraint (a story's `image`,
+`weakreference, picker[type='image'] < jmix:image`) stores the file and writes one reference to it. Every `image/*` file is
+stored as a `jmix:image` (with its size when the JDK reads the header: PNG, JPEG, GIF, BMP; a WebP or an SVG gets the mixin
+without a size), so the constraint holds. A file that cannot satisfy the constraint (a PDF for an image property) is refused
+**before** anything is written, with the visitor sentence of an invalid value. A single property still refuses more than one file.
+
+### A story, end to end
+
+For a content type `ctmd:story` (`mix:title`, a rich-text `body`, `image` as above, a multiple weak reference `authors` to
+`jnt:person`), the mapping of a supplier's story form reads:
+
+| Property | Filled from |
+|---|---|
+| Title (`jcr:title`) | the form field `headline` |
+| `body` | the form field `text` (a text area: escaped to paragraphs) |
+| `image` | the files of the upload field `cover` |
+| `authors` | the submitter's profile |
+| Categories (`j:defaultCategory`) | the choice field `topic`, in category mode over the root `/sites/systemsite/categories/topics` |
+
+```json
+{"version":1,"rows":[
+  {"target":"content","property":"jcr:title","source":"field","fieldName":"headline"},
+  {"target":"content","property":"body","source":"field","fieldName":"text"},
+  {"target":"content","property":"image","source":"files","fieldName":"cover"},
+  {"target":"content","property":"authors","source":"submitterProfile"},
+  {"target":"content","property":"j:defaultCategory","source":"field","fieldName":"topic"}
+]}
+```
+
+(The editor also stores each field's node id and key, so a renamed field keeps its row.)
+
+### The threat model
+
+The new reads and writes run with a **system session**, like the rest of the action, so what limits them is what they can reach:
+
+| Surface | What a visitor controls | What bounds it |
+|---|---|---|
+| Category values | The text of a choice field | The value is only a key into the map of the direct `jnt:category` children of the **field's own root** (chosen by the form's author, read in live). It is never used as a path, a query or a node name: an unknown value refuses the submission, nothing is created |
+| Page categories | The `Referer` header (it finds the page, as for the page source) | The page must be on the form's site, readable by the submitter in live, and a page or a main resource; its categories are copied as identifiers and a deleted one is left out when written |
+| Profile lookup | Nothing: the user name is the platform's (`JahiaUser.getUsername()`) | A bound variable; the path is `/sites/<site key>` from the **author-configured** content folder, the key validated as `[A-Za-z0-9_-]+` before it enters the statement (a path cannot be bound); each candidate is checked again in code (path under the site, exact user name); only identifiers leave the query |
+| Rich text | The text of a field | Escaped to text: no tag, attribute or entity can come out of it |
+| A file for a constrained reference | The file and its detected type | Checked against the constraint before the write; a file never chooses where it is stored |
+
+What the module still trusts: the **author of the form** (the folders, the root categories, the properties), and the **editors
+who add the profile mixin** and type user names: anyone who can edit a profile node can attach their content to another person's
+user name, so restrict who may edit those nodes, as for any content that decides who is credited.
 
 ## The security model
 
@@ -218,6 +338,11 @@ The server log says what the visitor is not told, with the prefix `[formidable-c
 | same | `<user> cannot read <path> in live` | The folder's ACL does not give the user's group a read role, or it is not published |
 | This form is temporarily unavailable | `the action is misconfigured. Setting 'mapping': ...` | A field the mapping reads left the form, a property the type no longer has, a type that cannot be created there, a folder that is not published |
 | One of the values you entered is not valid | `field '...': Property '...' expects ...` | A value that does not fit its property |
+| same | `field '...': a value is not a category offered by the field` | A category value that is not the node name of a direct `jnt:category` child of the field's root |
+| same | `a file of '...' does not fit the property '...', which takes [jmix:image] only` | A file that cannot satisfy the reference's node type constraint (a PDF for an image) |
+| This form is temporarily unavailable | `... is not a choice field in category mode` / `The root category ... does not exist in live` | A categories row reads a field that is not in category mode, or its root category is deleted or not published |
+| same | `the profile of the submitter is looked up in the site of the content folder, which is not under /sites/<site key>` | The content folder is outside `/sites/<site key>`: the profile source needs a site |
+| (nothing: the story is created) | `has no profile in the site ... that fits '...'` (info) or `has N profiles ... which holds one: none is written` (warn) | No profile node carries the user name, or several for a single property |
 | The author's sentence, or "a file is missing" | `a file of '...' matching ... has no companion` | A required companion file is missing |
 | We could not save your submission | `could not be created in <path>: nothing was kept` | The platform refused a step (mandatory property, constraint, publication); the cause is logged |
 
@@ -227,13 +352,13 @@ The server log says what the visitor is not told, with the prefix `[formidable-c
 org.jahia.modules.formidable.content
   action/       CreateContentFormAction (the ContextualFormAction and its checks), ActionProps
   choicelist/   FormFieldsInitializer (the form's fields, for the title field)
-  convert/      ValueConverter, PropertyShape, TypedValue (text to the property's type)
+  convert/      ValueConverter, PropertyShape, TypedValue (text to the property's type), PlainTextHtml (text to safe HTML)
   folders/      SubmitterFolder (the group's subfolder)
   mapping/      Mappings (left=right lines), PairRule (companion files)
   names/        NodeNames (safe, unique node names), ImageSize (header only)
   page/         RefererPages (the Referer as repository paths)
   plan/         PlanBuilder, ContentPlan, Settings (everything decided and validated before a write)
-  platform/     Submitters, TypeCatalog (seams over the platform) and their Jahia implementations
+  platform/     Submitters, TypeCatalog, Categories, SubmitterProfiles (seams over the platform) and their Jahia implementations
   store/        ContentWriter, JcrContentWriter (the only code that writes, and cleans up)
   messages/     VisitorText (what a visitor can read, EN, FR, PT)
 ```

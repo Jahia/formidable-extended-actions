@@ -57,6 +57,11 @@ node scripts/check-editor-forms.mjs [formidable-accounts]    # the editor layout
 `formidable-engine:0.6.0-SNAPSHOT` must be in `~/.m2` (build it in a Formidable checkout). Do not deploy to a shared Jahia
 without the owner's say-so.
 
+Build with `mvn -o` once `~/.m2` is warm. A build without `-o` re-resolves `formidable-engine:0.6.0-SNAPSHOT` from the Jahia
+repository and overwrites the locally installed jar with the published snapshot, which has no `ContextualFormAction` /
+`FormActionContext` (the SPI of Jahia/formidable#406): accounts, content and redirect then fail with `cannot find symbol`.
+Rebuild the engine in a Formidable checkout that has the SPI (`mvn -pl formidable-engine -am install`) to restore it.
+
 ## Layout
 
 See the tree in [README.md](README.md#layout). The Cypress specs in `tests/` are reference material copied from the

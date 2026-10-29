@@ -41,6 +41,7 @@ release), `formidable-engine` 0.6, and `formidable-extended-inputs` for the pass
 | `allowedGroups` | empty | Groups, separated by semicolons, that a Create account action may add a visitor to: the only choices of its **Group** field. A name is a global group, or else a group of the form's own site. Empty: no action adds anyone to a group |
 | `publicBaseUrl` | empty | Scheme and host of the activation link (`https://www.example.com`). **Required for e-mail activation**: empty, or not an `http`/`https` origin, an action with activation refuses every sign-up. Never taken from the request |
 | `mailFrom` | empty | From address of the activation e-mail; empty: the sender of Jahia's mail settings |
+| `signInBackOfficeAccounts` | `false` | Whether the Sign in action also signs in **back-office accounts** (editors, reviewers, administrators) by their user name. Off: they are refused like a wrong password. Turn it on only where back-office accounts have no second factor or SSO policy on the platform's login (a demonstration instance): this path skips both. `root` and `guest` stay refused |
 
 The limits are counted **in memory, per JVM**: a restart, or another node of a cluster, starts from zero. The remote
 address is `request.getRemoteAddr()`: behind a proxy, configure the container so that it is the visitor's address, or every
@@ -75,8 +76,10 @@ Same as above with a field for the e-mail or the user name, a **Password** field
 *Current password*), the CAPTCHA, and a **Sign in** action: the login field, the password field, optionally the page to go to
 and a **Return parameter**, and a **Message when the sign-in fails** if you want your own words (one message for every cause).
 
-A visitor can type the e-mail in any case. `root` and `guest` can never be signed in through a public form, nor can any
-**back-office account** (see below): staff sign in on the platform's own login page, where a second factor and SSO apply.
+A visitor can type the e-mail in any case, or a user name: a value with `@` is the account the sign-up made from that
+e-mail, anything else a user name. `root` and `guest` can never be signed in through a public form, nor can a
+**back-office account** (see below) unless the administrator turns on `signInBackOfficeAccounts`: staff otherwise sign in on
+the platform's own login page, where a second factor and SSO apply.
 
 ## Where the visitor goes next
 
@@ -145,7 +148,8 @@ scanner that opens it consumes the token, and the visitor then simply signs in w
 - **Who configures the actions.** Only an action last saved by someone holding `formidableAccountsActions` runs.
 - **No second-factor bypass.** The Sign in action calls the platform's authentication service directly, like `/cms/login`,
   which the UPA (MFA) module asks to block at the proxy. It therefore refuses every back-office account (the test above, for a
-  user): only site visitors sign in through a form.
+  user): only site visitors sign in through a form. An instance whose back-office accounts have neither a second factor nor
+  SSO (a demonstration) may allow them with `signInBackOfficeAccounts`, off by default.
 - **No secret in messages.** A `${password}` (or any password control) in the form's success or error message prints nothing.
 
 **Not protected, by design or by limit**
@@ -165,7 +169,7 @@ scanner that opens it consumes the token, and the visitor then simply signs in w
 | The visitor reads "This form is temporarily unavailable" | The form has no CAPTCHA option, the site did not enable `formidable-accounts`, the action was last saved by someone without `formidableAccountsActions`, a field of the action is not chosen, the password field is not a *Password* input, or activation is on and Jahia's mail service is off or `publicBaseUrl` is not set | The server log says which (`[formidable-accounts]`), with the form's or the action's path |
 | The **Group** list of the action is empty | `allowedGroups` is empty, or none of its names exists globally or on this site | Ask the administrator to list the group in `org.jahia.modules.formidable.accounts.cfg` |
 | Sign-ups fail with the generic sentence and the log says `GROUP` | The action's group is no longer in `allowedGroups`, no longer exists, or now gives back-office access | Pick another group, or fix the configuration |
-| A staff member cannot sign in through the form | Back-office accounts never sign in through a form | Use the platform's login page |
+| A staff member cannot sign in through the form (the log says `A back-office account tried to sign in through the form`) | Back-office accounts do not sign in through a form while `signInBackOfficeAccounts` is off | Use the platform's login page, or turn the setting on where they have no second factor or SSO |
 | The action is missing from the actions list | The module is not enabled on the site, or the jContent tab is stale | Enable it, reload the tab |
 | The field lists of the action are empty | The action is not inside a form, or the form has no field of that kind (an e-mail field, a Password input) | Add the field, then reopen the action |
 | `Too many attempts` for everybody | Behind a proxy every visitor shares one remote address | Configure the container so `getRemoteAddr()` is the visitor's, or raise `maxAttemptsPerAddress` |

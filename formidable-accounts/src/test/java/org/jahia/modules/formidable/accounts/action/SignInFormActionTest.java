@@ -50,6 +50,7 @@ class SignInFormActionTest {
         guard.setConfig(config);
         guard.setDirectory(directory);
         wired.setGuard(guard);
+        wired.setConfig(config);
         return wired;
     }
 
@@ -124,6 +125,30 @@ class SignInFormActionTest {
 
         assertEquals(422, e.getHttpStatus());
         assertEquals(VisitorText.SIGN_IN_FAILED.in(FRENCH), e.getVisitorMessage());
+        assertTrue(auth.calls.isEmpty());
+    }
+
+    @Test
+    void aBackOfficeAccountSignsInByItsUserNameWhenTheOperatorAllowsIt() throws Exception {
+        // Verifies signInBackOfficeAccounts: an editor's user name (no e-mail) reaches the platform like a visitor's.
+        config = TestSupport.config(true, 100, 3, "https://www.example.com", true);
+        action = wire(new SignInFormAction(new Redirects((page, req, resp) -> Optional.empty())));
+        directory.backOffice.add("molex.editor");
+
+        action.execute(context("molex.editor", PASSWORD));
+
+        assertEquals(List.of("molex.editor|mysite"), auth.calls);
+    }
+
+    @Test
+    void rootNeverSignsInThroughAFormEvenWhenBackOfficeAccountsMay() {
+        // Verifies the reserved names hold whatever the switch: root and guest are refused before any lookup.
+        config = TestSupport.config(true, 100, 3, "https://www.example.com", true);
+        action = wire(new SignInFormAction(new Redirects((page, req, resp) -> Optional.empty())));
+
+        FormActionException e = refusal(context("root", PASSWORD));
+
+        assertEquals(422, e.getHttpStatus());
         assertTrue(auth.calls.isEmpty());
     }
 

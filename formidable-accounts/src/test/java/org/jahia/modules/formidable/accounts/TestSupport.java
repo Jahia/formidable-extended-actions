@@ -40,6 +40,12 @@ public final class TestSupport {
 
     /** The same, with the given activation origin (blank: none configured). */
     public static AccountsConfigService config(boolean requireCaptcha, int perAddress, int perAccount, String publicBaseUrl) {
+        return config(requireCaptcha, perAddress, perAccount, publicBaseUrl, false);
+    }
+
+    /** The same, choosing whether the Sign in action signs in back-office accounts. */
+    public static AccountsConfigService config(boolean requireCaptcha, int perAddress, int perAccount, String publicBaseUrl,
+                                               boolean signInBackOfficeAccounts) {
         AccountsConfig config = mock(AccountsConfig.class);
         when(config.requireCaptcha()).thenReturn(requireCaptcha);
         when(config.maxAttemptsPerAddress()).thenReturn(perAddress);
@@ -50,6 +56,7 @@ public final class TestSupport {
         when(config.allowedGroups()).thenReturn("customers;members");
         when(config.publicBaseUrl()).thenReturn(publicBaseUrl);
         when(config.mailFrom()).thenReturn("");
+        when(config.signInBackOfficeAccounts()).thenReturn(signInBackOfficeAccounts);
         AccountsConfigService service = new AccountsConfigService();
         service.apply(config);
         return service;

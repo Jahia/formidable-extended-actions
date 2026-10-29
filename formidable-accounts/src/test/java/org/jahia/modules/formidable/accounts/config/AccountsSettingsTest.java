@@ -86,7 +86,7 @@ class AccountsSettingsTest {
     @Test
     void nullsAreTolerated() {
         // Verifies the record never holds a null string or set.
-        AccountsSettings settings = new AccountsSettings(true, 1, Duration.ofSeconds(1), 1, Duration.ofSeconds(1), 100, null, null, null);
+        AccountsSettings settings = new AccountsSettings(true, 1, Duration.ofSeconds(1), 1, Duration.ofSeconds(1), 100, null, null, null, false);
 
         assertTrue(settings.allowedGroups().isEmpty());
         assertEquals("", settings.publicBaseUrl());

@@ -2,6 +2,7 @@ package org.jahia.modules.formidable.accounts.action;
 
 import org.jahia.modules.formidable.accounts.account.AccountDirectory;
 import org.jahia.modules.formidable.accounts.account.Authenticator;
+import org.jahia.modules.formidable.accounts.config.AccountsConfigService;
 import org.jahia.modules.formidable.accounts.messages.VisitorText;
 import org.jahia.modules.formidable.accounts.security.AccountsGuard;
 import org.jahia.modules.formidable.accounts.security.PasswordPolicy;
@@ -32,9 +33,10 @@ import java.util.Optional;
  * account, which the platform reports only after verifying the password: the visitor who proved who they are is told
  * the account is not active yet. The password is never logged nor returned.</p>
  *
- * <p>Back-office accounts never sign in here ({@link AccountDirectory#isBackOfficeUser}): this path calls the platform's
- * authentication service directly, so a second factor (UPA) or an SSO policy on the platform's login would not apply.
- * They read the answer of a wrong password.</p>
+ * <p>Back-office accounts do not sign in here ({@link AccountDirectory#isBackOfficeUser}) unless the operator allows it
+ * ({@code signInBackOfficeAccounts}, off by default): this path calls the platform's authentication service directly, so
+ * a second factor (UPA) or an SSO policy on the platform's login would not apply. Refused, they read the answer of a
+ * wrong password.</p>
  *
  * <p>Threading: a singleton, no per-request state in fields.</p>
  */
@@ -48,6 +50,7 @@ public class SignInFormAction implements ContextualFormAction {
     private AccountDirectory directory;
     private Authenticator authenticator;
     private AccountsGuard guard;
+    private AccountsConfigService config;
     private final Redirects redirects;
 
     public SignInFormAction() {
@@ -71,6 +74,11 @@ public class SignInFormAction implements ContextualFormAction {
     @Reference
     public void setGuard(AccountsGuard guard) {
         this.guard = guard;
+    }
+
+    @Reference
+    public void setConfig(AccountsConfigService config) {
+        this.config = config;
     }
 
     @Override
@@ -111,9 +119,10 @@ public class SignInFormAction implements ContextualFormAction {
             guard.signInFailed(request, typed);
             throw failure(action, locale);
         }
-        if (directory.isBackOfficeUser(username.get())) {
+        if (!config.settings().signInBackOfficeAccounts() && directory.isBackOfficeUser(username.get())) {
             // a form signs in site visitors; back-office accounts use the platform's login, where MFA and SSO apply (this
-            // path would skip them). The visitor reads the answer of a wrong password: the form does not say who is staff.
+            // path would skip them), unless the operator allows them here. The visitor reads the answer of a wrong
+            // password: the form does not say who is staff.
             log.warn("[formidable-accounts] A back-office account tried to sign in through the form {}: refused.", action.getPath());
             guard.signInFailed(request, typed);
             throw failure(action, locale);

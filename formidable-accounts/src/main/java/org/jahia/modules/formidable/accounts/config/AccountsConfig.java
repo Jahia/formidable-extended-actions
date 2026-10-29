@@ -92,4 +92,15 @@ public @interface AccountsConfig {
             type = AttributeType.STRING
     )
     String mailFrom() default "";
+
+    @AttributeDefinition(
+            name = "Sign in back-office accounts",
+            description = "Whether the Sign in action also signs in accounts with back-office access (editors, reviewers, "
+                    + "administrators), by their user name like any other account. Off by default: the action calls the "
+                    + "platform's authentication service directly, so a second factor (UPA) or an SSO policy set on the "
+                    + "platform's login does not apply to it. Turn it on only where back-office accounts have neither, a "
+                    + "demonstration instance for example. root and guest never sign in through a form. Default: false.",
+            type = AttributeType.BOOLEAN
+    )
+    boolean signInBackOfficeAccounts() default false;
 }

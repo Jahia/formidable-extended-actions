@@ -22,6 +22,7 @@ import java.util.stream.Collectors;
  * @param publicBaseUrl          scheme and host of the activation link; empty when not set or not an http(s) origin,
  *                               and then no activation link is ever sent
  * @param mailFrom               sender of the activation e-mail, empty for Jahia's default
+ * @param signInBackOfficeAccounts whether the Sign in action signs in accounts with back-office access
  */
 public record AccountsSettings(
         boolean requireCaptcha,
@@ -32,7 +33,8 @@ public record AccountsSettings(
         int maxTrackedKeys,
         Set<String> allowedGroups,
         String publicBaseUrl,
-        String mailFrom
+        String mailFrom,
+        boolean signInBackOfficeAccounts
 ) {
     private static final Pattern ORIGIN = Pattern.compile("^https?://[A-Za-z0-9.-]+(:[0-9]{1,5})?$", Pattern.CASE_INSENSITIVE);
 
@@ -45,7 +47,7 @@ public record AccountsSettings(
     /** What the component runs with before any configuration: every value the configuration file ships. */
     public static AccountsSettings defaults() {
         return new AccountsSettings(true, 20, Duration.ofSeconds(600), 5, Duration.ofSeconds(900), 10_000,
-                Set.of(), "", "");
+                Set.of(), "", "", false);
     }
 
     /**
@@ -62,7 +64,8 @@ public record AccountsSettings(
                 Math.max(100, config.maxTrackedKeys()),
                 parseGroups(config.allowedGroups()),
                 origin(config.publicBaseUrl()),
-                config.mailFrom() == null ? "" : config.mailFrom().trim());
+                config.mailFrom() == null ? "" : config.mailFrom().trim(),
+                config.signInBackOfficeAccounts());
     }
 
     /** Whether the administrator allowed Create account actions to add visitors to the group of this name, any case. */

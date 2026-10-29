@@ -8,6 +8,8 @@ PIDs, GraphQL fields, selector types and module ids are those of the separate mo
 
 ### New features
 
+* **Accounts** - `signInBackOfficeAccounts` (off by default) lets the Sign in action sign in back-office accounts by their
+  user name, for instances where they have neither a second factor nor SSO on the platform's login (a demonstration).
 * **Accounts** - Create account (`fmdbacc:createAccountAction`) and Sign in (`fmdbacc:signInAction`), with optional e-mail
   activation, the abuse limits of `org.jahia.modules.formidable.accounts.cfg`, the `allowedGroups` allow list and the
   `formidableAccountsActions` permission. From Jahia/formidable#406 (branch `feat/create-content-action`, the reviewed

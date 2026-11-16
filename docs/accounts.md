@@ -134,6 +134,10 @@ scanner that opens it consumes the token, and the visitor then simply signs in w
   reads the same sentence.
   The rate-limit sentence is the same for an account that exists and one that does not. The only distinct sentence, "your account
   is not active yet", is shown after the password was verified.
+- **With Formidable 0.6 the visitor reads the form's own error message for every refusal.** The released engine answers a
+  failed action with its status and the code `FMDB-008`, never with a text of the action, so the sentences above (and
+  the action's own failure message) are held by the module and logged, not displayed. What stays true: the answer is
+  the same for an account that exists and one that does not. Messages of a success ("check your mailbox") are shown.
 - **Abuse.** CAPTCHA required; per-address and per-account limits; the activation mailbox cannot be flooded (sign-ups are
   counted per address typed); failed sign-ins are counted per account and remote address, so nobody locks someone else out;
   an activation token is unguessable, hashed at rest, single use and expiring.

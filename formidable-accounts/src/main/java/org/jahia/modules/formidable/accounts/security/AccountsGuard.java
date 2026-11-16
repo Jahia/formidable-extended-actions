@@ -6,6 +6,7 @@ import org.jahia.modules.formidable.accounts.config.AccountsSettings;
 import org.jahia.modules.formidable.accounts.messages.VisitorText;
 import org.jahia.modules.formidable.engine.api.FmdbMixin;
 import org.jahia.modules.formidable.engine.api.FormActionContext;
+import org.jahia.modules.formidable.accounts.messages.Refusals;
 import org.jahia.modules.formidable.engine.api.FormActionException;
 import org.jahia.services.content.JCRNodeWrapper;
 import org.jahia.services.content.decorator.JCRSiteNode;
@@ -254,10 +255,10 @@ public class AccountsGuard {
     }
 
     private static FormActionException unavailable(Locale locale) {
-        return FormActionException.refusal(503, "account action refused: misconfigured form", VisitorText.UNAVAILABLE.in(locale));
+        return Refusals.refusal(503, "account action refused: misconfigured form", VisitorText.UNAVAILABLE.in(locale));
     }
 
     private static FormActionException tooMany(Locale locale) {
-        return FormActionException.refusal(429, "account action refused: rate limit", VisitorText.TOO_MANY_ATTEMPTS.in(locale));
+        return Refusals.refusal(429, "account action refused: rate limit", VisitorText.TOO_MANY_ATTEMPTS.in(locale));
     }
 }

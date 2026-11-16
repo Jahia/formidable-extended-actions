@@ -20,6 +20,7 @@ import org.jahia.modules.formidable.content.store.ContentWriter;
 import org.jahia.modules.formidable.engine.api.ContextualFormAction;
 import org.jahia.modules.formidable.engine.api.FormAction;
 import org.jahia.modules.formidable.engine.api.FormActionContext;
+import org.jahia.modules.formidable.content.messages.Refusals;
 import org.jahia.modules.formidable.engine.api.FormActionException;
 import org.jahia.modules.formidable.engine.api.FormActionResult;
 import org.jahia.services.content.JCRNodeWrapper;
@@ -142,7 +143,7 @@ public class CreateContentFormAction implements ContextualFormAction {
         // 1. Only signed-in users: a guest is refused before the settings are even read
         JahiaUser user = visitor == null ? null : visitor.getUser();
         if (user == null || JahiaUserManagerService.isGuest(user)) {
-            throw FormActionException.refusal(401, "create content refused: the submitter is a guest", VisitorText.SIGN_IN_REQUIRED.in(locale));
+            throw Refusals.refusal(401, "create content refused: the submitter is a guest", VisitorText.SIGN_IN_REQUIRED.in(locale));
         }
         if (!isLive(visitor)) {
             log.error("[formidable-content] The submitter's session is not a live session: the submission is refused.");
@@ -250,7 +251,7 @@ public class CreateContentFormAction implements ContextualFormAction {
                 throw noFolder(locale, "the subfolder does not exist");
             }
         } catch (RepositoryException e) {
-            throw FormActionException.refusal(500, "the folder could not be inspected", VisitorText.FAILED.in(locale), e);
+            throw Refusals.refusal(500, "the folder could not be inspected", VisitorText.FAILED.in(locale), e);
         }
     }
 
@@ -292,7 +293,7 @@ public class CreateContentFormAction implements ContextualFormAction {
         } catch (ValueException e) {
             log.warn("[formidable-content] A submission to {} was refused: {}", action.getPath(), e.getMessage());
             String message = e.kind() == ValueException.Kind.PAIR ? pairMessage(action, locale) : VisitorText.BAD_VALUE.in(locale);
-            throw FormActionException.refusal(422, "create content refused: " + e.getMessage(), message);
+            throw Refusals.refusal(422, "create content refused: " + e.getMessage(), message);
         }
     }
 
@@ -310,7 +311,7 @@ public class CreateContentFormAction implements ContextualFormAction {
             return writer.create(plan, user);
         } catch (RepositoryException | RuntimeException e) {
             log.error("[formidable-content] The content of {} could not be created in {}: nothing was kept.", user.getUsername(), plan.parentPath(), e);
-            throw FormActionException.refusal(500, "create content failed: " + e.getClass().getSimpleName(), VisitorText.FAILED.in(locale), e);
+            throw Refusals.refusal(500, "create content failed: " + e.getClass().getSimpleName(), VisitorText.FAILED.in(locale), e);
         }
     }
 
@@ -388,10 +389,10 @@ public class CreateContentFormAction implements ContextualFormAction {
     }
 
     private static FormActionException noFolder(Locale locale, String internal) {
-        return FormActionException.refusal(403, "create content refused: " + internal, VisitorText.NO_FOLDER.in(locale));
+        return Refusals.refusal(403, "create content refused: " + internal, VisitorText.NO_FOLDER.in(locale));
     }
 
     private static FormActionException unavailable(Locale locale) {
-        return FormActionException.refusal(503, "create content refused: the action is misconfigured", VisitorText.UNAVAILABLE.in(locale));
+        return Refusals.refusal(503, "create content refused: the action is misconfigured", VisitorText.UNAVAILABLE.in(locale));
     }
 }

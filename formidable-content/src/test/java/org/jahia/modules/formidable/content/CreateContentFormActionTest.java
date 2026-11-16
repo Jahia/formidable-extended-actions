@@ -1,5 +1,6 @@
 package org.jahia.modules.formidable.content;
 
+import org.jahia.modules.formidable.content.messages.Refusals;
 import org.jahia.modules.formidable.content.action.CreateContentFormAction;
 import org.jahia.modules.formidable.content.convert.Reference;
 import org.jahia.modules.formidable.content.plan.ContentPlan;
@@ -283,7 +284,7 @@ class CreateContentFormActionTest {
         FormActionContext context = context();
         FormActionException error = assertThrows(FormActionException.class, () -> action.execute(context));
         assertEquals(status, error.getHttpStatus());
-        assertTrue(error.hasVisitorMessage(), "the visitor reads a sentence");
+        assertTrue(Refusals.visitorText(error) != null && !Refusals.visitorText(error).isBlank(), "the refusal holds a sentence for the visitor");
         assertTrue(writer.plans.isEmpty(), "nothing was written");
         return error;
     }
@@ -320,7 +321,7 @@ class CreateContentFormActionTest {
         when(user.getUsername()).thenReturn("guest");
         when(user.getName()).thenReturn("guest");
         FormActionException error = refused(401);
-        assertEquals(org.jahia.modules.formidable.content.messages.VisitorText.SIGN_IN_REQUIRED.in(Locale.ENGLISH), error.getVisitorMessage());
+        assertEquals(org.jahia.modules.formidable.content.messages.VisitorText.SIGN_IN_REQUIRED.in(Locale.ENGLISH), Refusals.visitorText(error));
         assertTrue(readAttempts.isEmpty(), "no folder was even looked at");
     }
 
@@ -429,14 +430,14 @@ class CreateContentFormActionTest {
         uploads = new ArrayList<>(List.of(new SubmittedFile("media", "film.mp4", "video/mp4", new byte[]{1})));
         strings.put("pairRefusalMessage", "Every video needs its captions file (WebVTT).");
         FormActionException error = refused(422);
-        assertEquals("Every video needs its captions file (WebVTT).", error.getVisitorMessage());
+        assertEquals("Every video needs its captions file (WebVTT).", Refusals.visitorText(error));
     }
 
     @Test
     void withoutAnOwnSentenceTheDefaultOneIsUsed() throws Exception {
         uploads = new ArrayList<>(List.of(new SubmittedFile("media", "film.mp4", "video/mp4", new byte[]{1})));
         FormActionException error = refused(422);
-        assertEquals(org.jahia.modules.formidable.content.messages.VisitorText.PAIR_REFUSAL.in(Locale.ENGLISH), error.getVisitorMessage());
+        assertEquals(org.jahia.modules.formidable.content.messages.VisitorText.PAIR_REFUSAL.in(Locale.ENGLISH), Refusals.visitorText(error));
     }
 
     @Test
@@ -444,7 +445,7 @@ class CreateContentFormActionTest {
         fieldRows(row("durationMinutes", "field", "minutes"));
         values.put("minutes", List.of("two hours"));
         FormActionException error = refused(422);
-        assertFalse(error.getVisitorMessage().contains("durationMinutes"), "the visitor is not told property names");
+        assertFalse(Refusals.visitorText(error).contains("durationMinutes"), "the visitor is not told property names");
         assertTrue(error.getMessage().contains("minutes"), "the log is");
         assertFalse(error.getMessage().contains("two hours"));
     }
@@ -453,7 +454,7 @@ class CreateContentFormActionTest {
     void aMappingToAnUnknownPropertyIsAConfigurationError() throws Exception {
         fieldRows(row("nosuch", "field", "summary"));
         FormActionException error = refused(503);
-        assertFalse(error.getVisitorMessage().contains("nosuch"));
+        assertFalse(Refusals.visitorText(error).contains("nosuch"));
     }
 
     @Test
@@ -466,7 +467,7 @@ class CreateContentFormActionTest {
     void aRowWhoseFieldLeftTheFormIsAConfigurationError() throws Exception {
         fieldRows(row("description", "field", "deletedField"));
         FormActionException error = refused(503);
-        assertFalse(error.getVisitorMessage().contains("deletedField"), "the visitor is not told field names");
+        assertFalse(Refusals.visitorText(error).contains("deletedField"), "the visitor is not told field names");
     }
 
     @Test
@@ -475,7 +476,7 @@ class CreateContentFormActionTest {
         FormActionContext context = context();
         FormActionException error = assertThrows(FormActionException.class, () -> action.execute(context));
         assertEquals(500, error.getHttpStatus());
-        assertFalse(error.getVisitorMessage().contains("secret"));
+        assertFalse(Refusals.visitorText(error).contains("secret"));
     }
 
     @Test
@@ -532,7 +533,7 @@ class CreateContentFormActionTest {
     @Test
     void theActionNeverAsksForSensitiveValuesAndIsRegisteredForItsType() {
         assertEquals("fmdbcnt:createContentAction", action.getNodeType());
-        assertFalse(action.consumesSensitiveValues());
+        assertFalse(action.sensitiveFieldsConsumed(null).selectsAll());
     }
 
     // ----- the story mapping: categories, rich text, the submitter's profile -----
@@ -563,7 +564,7 @@ class CreateContentFormActionTest {
         rows.add(row("j:defaultCategory", "field", "topic"));
         values.put("topic", List.of("sports", "../../systemsite"));
         FormActionException error = refused(422);
-        assertEquals(org.jahia.modules.formidable.content.messages.VisitorText.BAD_VALUE.in(Locale.ENGLISH), error.getVisitorMessage());
+        assertEquals(org.jahia.modules.formidable.content.messages.VisitorText.BAD_VALUE.in(Locale.ENGLISH), Refusals.visitorText(error));
         assertFalse(error.getMessage().contains("systemsite"), "what was typed stays out of the log");
     }
 
@@ -572,7 +573,7 @@ class CreateContentFormActionTest {
         rows.add(row("j:defaultCategory", "field", "region"));
         values.put("region", List.of("europe"));
         FormActionException error = refused(503);
-        assertFalse(error.getVisitorMessage().contains("region"));
+        assertFalse(Refusals.visitorText(error).contains("region"));
     }
 
     @Test
@@ -692,6 +693,6 @@ class CreateContentFormActionTest {
         writer.plans.clear();
         uploads = new ArrayList<>(List.of(new SubmittedFile("media", "brief.pdf", "application/pdf", new byte[]{1})));
         FormActionException error = refused(422);
-        assertEquals(org.jahia.modules.formidable.content.messages.VisitorText.BAD_VALUE.in(Locale.ENGLISH), error.getVisitorMessage());
+        assertEquals(org.jahia.modules.formidable.content.messages.VisitorText.BAD_VALUE.in(Locale.ENGLISH), Refusals.visitorText(error));
     }
 }

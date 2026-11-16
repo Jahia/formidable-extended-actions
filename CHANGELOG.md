@@ -6,6 +6,15 @@ First release of `formidable-extended-actions`: the form actions that no longer 
 (`Jahia/formidable`), gathered in one repository as six independent modules, one per action family. Node types, properties,
 PIDs, GraphQL fields, selector types and module ids are those of the separate modules.
 
+### Compatibility
+
+* **Built against the released `formidable-engine` 0.6.0.** The modules were written against a pre-release build whose
+  API changed before the release: `PageLinks.pathOf` became `urlOf`, `RedirectTargets.pathOfReferer` became
+  `pathOnServer`, `consumesSensitiveValues()` became `sensitiveFieldsConsumed()`, and `VisitorMessages`,
+  `RedirectTargets.returnPath` and the visitor text of a refusal are gone. On 0.6.0 the Create account and Sign in
+  actions failed to start (`NoSuchMethodError`). Accounts, Content and Redirect are ported; a refusal now shows the
+  form's own error message, since the engine sends no text with a failed action.
+
 ### New features
 
 * **Accounts** - `signInBackOfficeAccounts` (off by default) lets the Sign in action sign in back-office accounts by their

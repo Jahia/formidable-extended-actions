@@ -1,5 +1,6 @@
 package org.jahia.modules.formidable.accounts.action;
 
+import org.jahia.modules.formidable.accounts.messages.Refusals;
 import org.jahia.modules.formidable.accounts.TestSupport;
 import org.jahia.modules.formidable.accounts.account.Authenticator;
 import org.jahia.modules.formidable.accounts.config.AccountsConfigService;
@@ -79,7 +80,7 @@ class SignInFormActionTest {
 
         assertEquals(List.of("ada@example.com|mysite"), auth.calls);
         assertEquals("/members", result.redirectPath());
-        assertTrue(action.consumesSensitiveValues());
+        assertTrue(action.sensitiveFieldsConsumed(null).selectsAll());
         assertEquals("fmdbacc:signInAction", action.getNodeType());
     }
 
@@ -91,9 +92,9 @@ class SignInFormActionTest {
         FormActionException invalidName = refusal(context("not valid!", "nope"));
         FormActionException noPassword = refusal(context("ada@example.com", null));
 
-        assertEquals(VisitorText.SIGN_IN_FAILED.in(FRENCH), wrongPassword.getVisitorMessage());
-        assertEquals(wrongPassword.getVisitorMessage(), invalidName.getVisitorMessage());
-        assertEquals(wrongPassword.getVisitorMessage(), noPassword.getVisitorMessage());
+        assertEquals(VisitorText.SIGN_IN_FAILED.in(FRENCH), Refusals.visitorText(wrongPassword));
+        assertEquals(Refusals.visitorText(wrongPassword), Refusals.visitorText(invalidName));
+        assertEquals(Refusals.visitorText(wrongPassword), Refusals.visitorText(noPassword));
         assertEquals(wrongPassword.getHttpStatus(), invalidName.getHttpStatus());
         assertEquals(422, wrongPassword.getHttpStatus());
     }
@@ -103,7 +104,7 @@ class SignInFormActionTest {
         // Verifies the one distinct message: the platform reports a locked account only after verifying the password.
         auth.outcome = Authenticator.Outcome.NOT_ACTIVE;
 
-        assertEquals(VisitorText.ACCOUNT_NOT_ACTIVE.in(FRENCH), refusal(context("ada@example.com", PASSWORD)).getVisitorMessage());
+        assertEquals(VisitorText.ACCOUNT_NOT_ACTIVE.in(FRENCH), Refusals.visitorText(refusal(context("ada@example.com", PASSWORD))));
     }
 
     @Test
@@ -124,7 +125,7 @@ class SignInFormActionTest {
         FormActionException e = refusal(context("mara", PASSWORD));
 
         assertEquals(422, e.getHttpStatus());
-        assertEquals(VisitorText.SIGN_IN_FAILED.in(FRENCH), e.getVisitorMessage());
+        assertEquals(VisitorText.SIGN_IN_FAILED.in(FRENCH), Refusals.visitorText(e));
         assertTrue(auth.calls.isEmpty());
     }
 
@@ -158,7 +159,7 @@ class SignInFormActionTest {
         settings.put("failureMessage", "Identifiants incorrects.");
         auth.outcome = Authenticator.Outcome.REJECTED;
 
-        assertEquals("Identifiants incorrects.", refusal(context("ada@example.com", "nope")).getVisitorMessage());
+        assertEquals("Identifiants incorrects.", Refusals.visitorText(refusal(context("ada@example.com", "nope"))));
     }
 
     @Test
@@ -177,8 +178,8 @@ class SignInFormActionTest {
         unknownBlocked = refusal(context("ghost@example.com", PASSWORD));
 
         assertEquals(429, blocked.getHttpStatus());
-        assertEquals(VisitorText.TOO_MANY_ATTEMPTS.in(FRENCH), blocked.getVisitorMessage());
-        assertEquals(blocked.getVisitorMessage(), unknownBlocked.getVisitorMessage());
+        assertEquals(VisitorText.TOO_MANY_ATTEMPTS.in(FRENCH), Refusals.visitorText(blocked));
+        assertEquals(Refusals.visitorText(blocked), Refusals.visitorText(unknownBlocked));
         assertEquals(6, auth.calls.size(), "a blocked attempt never reaches the platform");
     }
 
@@ -228,6 +229,6 @@ class SignInFormActionTest {
         FormActionException e = refusal(context("ada@example.com", PASSWORD));
 
         assertFalse(String.valueOf(e.getMessage()).contains(PASSWORD));
-        assertFalse(String.valueOf(e.getVisitorMessage()).contains(PASSWORD));
+        assertFalse(String.valueOf(Refusals.visitorText(e)).contains(PASSWORD));
     }
 }

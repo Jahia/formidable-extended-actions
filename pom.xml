@@ -43,7 +43,7 @@
         <!-- The Formidable core these modules extend (the SPI org.jahia.modules.formidable.engine.api, with the contextual
              action extension point of Jahia/formidable#406). Install it first: mvn -pl formidable-engine -am install
              in a Formidable checkout. -->
-        <formidable.engine.version>0.6.0-SNAPSHOT</formidable.engine.version>
+        <formidable.engine.version>0.6.0</formidable.engine.version>
         <graphql-dxm-provider.version>3.5.1</graphql-dxm-provider.version>
         <graphql-java-annotations.version>21.1</graphql-java-annotations.version>
         <javax.inject.version>1</javax.inject.version>

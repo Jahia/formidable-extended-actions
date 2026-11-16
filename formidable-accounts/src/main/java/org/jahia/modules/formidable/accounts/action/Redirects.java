@@ -1,6 +1,7 @@
 package org.jahia.modules.formidable.accounts.action;
 
 import org.jahia.modules.formidable.engine.api.FormActionContext;
+import org.jahia.modules.formidable.engine.api.FormActionResult;
 import org.jahia.modules.formidable.engine.api.PageLinks;
 import org.jahia.modules.formidable.engine.api.RedirectTargets;
 import org.jahia.services.content.JCRNodeWrapper;
@@ -10,6 +11,8 @@ import org.slf4j.LoggerFactory;
 import javax.jcr.RepositoryException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 
 /**
@@ -33,7 +36,7 @@ final class Redirects {
     private final PageUrls pageUrls;
 
     Redirects() {
-        this(PageLinks::pathOf);
+        this(PageLinks::urlOf);
     }
 
     Redirects(PageUrls pageUrls) {
@@ -49,7 +52,7 @@ final class Redirects {
         JCRNodeWrapper action = context.actionNode();
         if (useReturn) {
             String parameter = ActionProps.string(action, "redirectParameter");
-            Optional<String> back = RedirectTargets.returnPath(context.request().getHeader("Referer"), context.request().getServerName(), parameter);
+            Optional<String> back = returnPath(context.request().getHeader("Referer"), context.request().getServerName(), parameter);
             if (back.isPresent()) {
                 return back;
             }
@@ -74,5 +77,53 @@ final class Redirects {
             log.warn("[formidable-accounts] The page of '{}' could not be resolved: no redirect.", property);
             return Optional.empty();
         }
+    }
+
+    /**
+     * The value of one query parameter of the page the visitor submitted from, accepted only when it is a safe
+     * same-origin path: the "send me back where I was going" pattern ({@code /login?redirect=/account}).
+     *
+     * @param referer       the {@code Referer} header, may be {@code null}
+     * @param serverName    the host name the request reached
+     * @param parameterName the query parameter to read, for instance {@code redirect}
+     * @return the path, when the page is on this server, the parameter is present and its value is a safe path
+     */
+    static Optional<String> returnPath(String referer, String serverName, String parameterName) {
+        if (parameterName == null || parameterName.isBlank()) {
+            return Optional.empty();
+        }
+        Optional<String> page = RedirectTargets.pathOnServer(referer, serverName);
+        int question = page.map(path -> path.indexOf('?')).orElse(-1);
+        if (question < 0) {
+            return Optional.empty();
+        }
+        for (String pair : page.get().substring(question + 1).split("&")) {
+            int equals = pair.indexOf('=');
+            if (parameterName.equals(decode(equals < 0 ? pair : pair.substring(0, equals)))) {
+                return RedirectTargets.sameOriginPath(equals < 0 ? "" : decode(pair.substring(equals + 1)));
+            }
+        }
+        return Optional.empty();
+    }
+
+    private static String decode(String raw) {
+        try {
+            return URLDecoder.decode(raw, StandardCharsets.UTF_8);
+        } catch (IllegalArgumentException e) {
+            return "";
+        }
+    }
+
+    /**
+     * @param result the answer so far
+     * @param target what {@link #resolve} or {@link #page} answered: a path of this server, or the absolute URL the
+     *               platform printed for a page of a site with another server name
+     * @return the answer with its redirect; unchanged when the target is neither
+     */
+    static FormActionResult withRedirect(FormActionResult result, String target) {
+        if (RedirectTargets.sameOriginPath(target).isPresent()) {
+            return result.withRedirect(target);
+        }
+        return RedirectTargets.httpUrl(target).map(result::withRedirectToUrl).orElse(result);
     }
 }

@@ -1,0 +1,19 @@
+{
+	"nodeType": "fmdbpdf:pdfCopyAction",
+	"priority": 2.0,
+	"sections": [
+		{
+			"name": "content",
+			"fieldSets": [
+				{
+					"name": "<main>",
+					"fields": [
+						{ "name": "documentTitle", "rank": 1.0 },
+						{ "name": "buttonLabel", "rank": 2.0 },
+						{ "name": "closingNote", "rank": 3.0 }
+					]
+				}
+			]
+		}
+	]
+}

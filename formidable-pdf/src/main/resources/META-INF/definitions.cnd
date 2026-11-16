@@ -1,0 +1,15 @@
+<nt = 'http://www.jcp.org/jcr/nt/1.0'>
+<mix = 'http://www.jcp.org/jcr/mix/1.0'>
+<jnt = 'http://www.jahia.org/jahia/nt/1.0'>
+<fmdbmix = 'http://www.jahia.org/jahia/fmdb/mix/1.0'>
+<fmdbpdf = 'http://www.jahia.org/jahia/fmdbpdf/nt/1.0'>
+
+// Formidable PDF: gives the visitor a PDF of what they submitted, behind a download button shown with the
+// confirmation message. The document lists every field that received an answer, under the label the visitor saw,
+// with a reference and the time of the submission. It is built in memory and kept for a while (see the module's
+// .cfg): nothing is written to the repository, so the action is read-only compatible.
+[fmdbpdf:pdfCopyAction] > jnt:content, fmdbmix:formAction, fmdbmix:readOnlyCompatibleAction, mix:title
+ - jcr:title (string) = resourceBundle('fmdbpdf_pdfCopyAction') autocreated i18n
+ - documentTitle (string) i18n indexed=no
+ - buttonLabel (string) i18n indexed=no
+ - closingNote (string, textarea) i18n indexed=no

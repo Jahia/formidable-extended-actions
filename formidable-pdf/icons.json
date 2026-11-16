@@ -1,0 +1,7 @@
+{
+  "ink": "#0b6e8a",
+  "out": "src/main/resources/icons",
+  "icons": {
+    "fmdbpdf:pdfCopyAction": "file-down"
+  }
+}

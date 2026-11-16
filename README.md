@@ -8,6 +8,7 @@ Efficy module on a Jahia that has no Efficy. Five of the families used to be mod
 |---|---|---|---|---|---|
 | `formidable-accounts` | Create account, Sign in | `fmdbacc:createAccountAction`, `fmdbacc:signInAction` | `org.jahia.modules.formidable.accounts` | Jahia 8.2.3.0+, `formidable-engine=0.6` | [docs/accounts.md](docs/accounts.md) |
 | `formidable-content` | Create content | `fmdbcnt:createContentAction` | `org.jahia.modules.formidable.content` | Jahia 8.2.2.0+, `formidable-engine=0.6` | [docs/content.md](docs/content.md) |
+| `formidable-pdf` | PDF copy | `fmdbpdf:pdfCopyAction` | `org.jahia.modules.formidable.pdf` | Jahia 8.2.3.0+, `formidable-engine=0.6` | [docs/pdf.md](docs/pdf.md) |
 | `formidable-redirect` | Redirect | `fmdbred:redirectAction` | `org.jahia.modules.formidable.redirect` | Jahia 8.2.2.0+, `formidable-engine=0.6` | [docs/redirect.md](docs/redirect.md) |
 | `formidable-salesforce` | Create Salesforce Lead | `fmdbsfdc:createLeadAction` | `org.jahia.modules.formidable.salesforce` | Jahia 8.2.2.0+, `formidable-engine`, `graphql-dxm-provider` | [docs/salesforce.md](docs/salesforce.md) |
 | `formidable-hubspot` | Create HubSpot Contact | `fmdbhs:createContactAction` | `org.jahia.modules.formidable.hubspot` | same | [docs/hubspot.md](docs/hubspot.md) |

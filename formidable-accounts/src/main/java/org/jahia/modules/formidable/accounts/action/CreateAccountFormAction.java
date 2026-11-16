@@ -186,9 +186,9 @@ public class CreateAccountFormAction implements ContextualFormAction {
                 log.info("[formidable-accounts] A sign-up for an address that is already registered was answered as a new one.");
                 return pendingAnswer(action, locale, redirect);
             }
-            // the reason is for the log; the visitor reads one sentence whatever it was. Without activation the visitor is
-            // signed in at once, so a sign-up form cannot hide that an address is taken: protect it with activation.
-            log.warn("[formidable-accounts] An account was not created ({}).", e.refusal());
+            // the reason is for the log (the engine logs the failure's message); the visitor reads one sentence whatever it
+            // was. Without activation the visitor is signed in at once, so a sign-up form cannot hide that an address is
+            // taken: protect it with activation.
             throw Refusals.refusal(422, "sign-up refused: " + e.refusal(), VisitorText.GENERIC_FAILURE.in(locale), e);
         }
 
@@ -221,8 +221,8 @@ public class CreateAccountFormAction implements ContextualFormAction {
         } catch (ActivationMailer.MailUnavailableException e) {
             // an account nobody can activate is worse than no account: remove it, so the visitor can try again
             directory.delete(created.identifier());
-            log.error("[formidable-accounts] The activation e-mail of {} could not be sent: the account was removed.", created.identifier(), e);
-            throw Refusals.refusal(503, "sign-up refused: the activation e-mail could not be sent", VisitorText.UNAVAILABLE.in(locale), e);
+            throw Refusals.refusal(503, "sign-up refused: the activation e-mail of " + created.identifier()
+                    + " could not be sent, the account was removed", VisitorText.UNAVAILABLE.in(locale), e);
         }
         log.info("[formidable-accounts] The account {} was created and awaits its activation.", created.identifier());
         return pendingAnswer(action, locale, redirect);

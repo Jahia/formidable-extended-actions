@@ -117,18 +117,23 @@ public final class ReceiptReader {
         Map<String, String> labels = choice ? optionLabels(field, locale) : Map.of();
         boolean yesNo = field.isNodeType(FmdbMixin.BOOLEAN_FIELD);
         for (String value : submitted) {
-            if (value == null || value.isBlank()) {
-                continue;
-            }
-            if (yesNo) {
-                values.add(Texts.in(locale, "false".equalsIgnoreCase(value.trim()) ? "pdf.no" : "pdf.yes"));
-            } else if (choice) {
-                values.add(labels.containsKey(value) ? labels.get(value) : sourcedLabel(field, value, locale));
-            } else {
-                values.add(dated(field, value, locale));
+            if (value != null && !value.isBlank()) {
+                values.add(written(field, value, yesNo, labels, locale));
             }
         }
         return values;
+    }
+
+    /** One submitted value as the visitor reads it: yes or no, the label of an option, a date, or as typed. */
+    private static String written(JCRNodeWrapper field, String value, boolean yesNo, Map<String, String> labels, Locale locale)
+            throws RepositoryException {
+        if (yesNo) {
+            return Texts.in(locale, "false".equalsIgnoreCase(value.trim()) ? "pdf.no" : "pdf.yes");
+        }
+        if (field.isNodeType(FmdbMixin.CHOICE_FIELD)) {
+            return labels.containsKey(value) ? labels.get(value) : sourcedLabel(field, value, locale);
+        }
+        return dated(field, value, locale);
     }
 
     /** A date or a date and time, as the visitor's language writes it; any other value, and one that does not parse, as typed. */

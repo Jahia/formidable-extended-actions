@@ -50,6 +50,6 @@ public final class Refusals {
 
     /** @return the sentence a failure holds for the visitor, {@code null} for a failure that is not a refusal */
     public static String visitorText(FormActionException failure) {
-        return failure instanceof Refusal ? ((Refusal) failure).getVisitorMessage() : null;
+        return failure instanceof Refusal refusal ? refusal.getVisitorMessage() : null;
     }
 }

@@ -106,8 +106,20 @@ public class PdfCopyFormAction implements ContextualFormAction {
 
     /** A file name any system accepts: the title in ASCII letters and digits, then the reference. */
     static String fileName(String title, String reference) {
-        String name = java.text.Normalizer.normalize(title == null ? "" : title, java.text.Normalizer.Form.NFD)
-                .replaceAll("\\p{M}", "").replaceAll("[^A-Za-z0-9]+", "-").replaceAll("(^-+)|(-+$)", "").toLowerCase(Locale.ROOT);
+        String name = trimHyphens(java.text.Normalizer.normalize(title == null ? "" : title, java.text.Normalizer.Form.NFD)
+                .replaceAll("\\p{M}", "").replaceAll("[^A-Za-z0-9]+", "-").toLowerCase(Locale.ROOT));
         return (name.isEmpty() ? "submission" : name.substring(0, Math.min(60, name.length()))) + "-" + reference + ".pdf";
+    }
+
+    private static String trimHyphens(String name) {
+        int start = 0;
+        int end = name.length();
+        while (start < end && name.charAt(start) == '-') {
+            start++;
+        }
+        while (end > start && name.charAt(end - 1) == '-') {
+            end--;
+        }
+        return name.substring(start, end);
     }
 }

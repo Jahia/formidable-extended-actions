@@ -291,9 +291,8 @@ public class CreateContentFormAction implements ContextualFormAction {
             return PlanBuilder.build(settings, submission, new PlanBuilder.Identity(user.getUsername(), organization), page, target,
                     languagesOf(context), catalog, new PlanBuilder.Lookups(categories, profiles));
         } catch (ValueException e) {
-            log.warn("[formidable-content] A submission to {} was refused: {}", action.getPath(), e.getMessage());
             String message = e.kind() == ValueException.Kind.PAIR ? pairMessage(action, locale) : VisitorText.BAD_VALUE.in(locale);
-            throw Refusals.refusal(422, "create content refused: " + e.getMessage(), message);
+            throw Refusals.refusal(422, "create content refused for " + action.getPath() + ": " + e.getMessage(), message, e);
         }
     }
 
@@ -310,8 +309,8 @@ public class CreateContentFormAction implements ContextualFormAction {
         try {
             return writer.create(plan, user);
         } catch (RepositoryException | RuntimeException e) {
-            log.error("[formidable-content] The content of {} could not be created in {}: nothing was kept.", user.getUsername(), plan.parentPath(), e);
-            throw Refusals.refusal(500, "create content failed: " + e.getClass().getSimpleName(), VisitorText.FAILED.in(locale), e);
+            throw Refusals.refusal(500, "create content failed in " + plan.parentPath() + ", nothing was kept: "
+                    + e.getClass().getSimpleName(), VisitorText.FAILED.in(locale), e);
         }
     }
 

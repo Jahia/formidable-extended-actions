@@ -10,12 +10,14 @@ import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayDeque;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 
 /**
@@ -39,6 +41,22 @@ public class ReceiptStore {
 
     /** A copy: the document, the name of the file the browser saves, the label of its button. */
     public record Receipt(byte[] pdf, String fileName, String buttonLabel) {
+
+        @Override
+        public boolean equals(Object other) {
+            return other instanceof Receipt receipt && Arrays.equals(pdf, receipt.pdf)
+                    && Objects.equals(fileName, receipt.fileName) && Objects.equals(buttonLabel, receipt.buttonLabel);
+        }
+
+        @Override
+        public int hashCode() {
+            return 31 * Objects.hash(fileName, buttonLabel) + Arrays.hashCode(pdf);
+        }
+
+        @Override
+        public String toString() {
+            return "Receipt[" + fileName + ", " + (pdf == null ? 0 : pdf.length) + " bytes]";
+        }
     }
 
     private record Timed(Receipt receipt, Instant expires) {

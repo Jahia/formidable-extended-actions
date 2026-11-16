@@ -188,30 +188,35 @@ public final class ReceiptPdf {
             for (String paragraph : (text == null ? "" : text).split("\\R", -1)) {
                 StringBuilder line = new StringBuilder();
                 for (String word : printable(paragraph).split(" ")) {
-                    String candidate = line.length() == 0 ? word : line + " " + word;
+                    String candidate = line.isEmpty() ? word : line + " " + word;
                     if (width(candidate, size) <= TEXT_WIDTH) {
                         line.setLength(0);
                         line.append(candidate);
                         continue;
                     }
-                    if (line.length() > 0) {
+                    if (!line.isEmpty()) {
                         lines.add(line.toString());
                         line.setLength(0);
                     }
-                    String rest = word;
-                    while (width(rest, size) > TEXT_WIDTH) {
-                        int cut = rest.length() - 1;
-                        while (cut > 1 && width(rest.substring(0, cut), size) > TEXT_WIDTH) {
-                            cut--;
-                        }
-                        lines.add(rest.substring(0, cut));
-                        rest = rest.substring(cut);
-                    }
-                    line.append(rest);
+                    line.append(breakWord(word, size, lines));
                 }
                 lines.add(line.toString());
             }
             return lines;
+        }
+
+        /** Cuts a word longer than a line into full lines, added to {@code lines}; returns what is left of it. */
+        private String breakWord(String word, float size, List<String> lines) throws IOException {
+            String rest = word;
+            while (width(rest, size) > TEXT_WIDTH) {
+                int cut = rest.length() - 1;
+                while (cut > 1 && width(rest.substring(0, cut), size) > TEXT_WIDTH) {
+                    cut--;
+                }
+                lines.add(rest.substring(0, cut));
+                rest = rest.substring(cut);
+            }
+            return rest;
         }
 
         private float width(String text, float size) throws IOException {

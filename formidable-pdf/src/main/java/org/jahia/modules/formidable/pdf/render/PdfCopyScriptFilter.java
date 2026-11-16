@@ -74,7 +74,7 @@ public class PdfCopyScriptFilter extends AbstractFilter {
         }
         JCRNodeIteratorWrapper actions = form.getNode(ACTIONS).getNodes();
         while (actions.hasNext()) {
-            if (((JCRNodeWrapper) actions.nextNode()).isNodeType(PdfCopyFormAction.NODE_TYPE)) {
+            if (actions.nextNode().isNodeType(PdfCopyFormAction.NODE_TYPE)) {
                 return true;
             }
         }

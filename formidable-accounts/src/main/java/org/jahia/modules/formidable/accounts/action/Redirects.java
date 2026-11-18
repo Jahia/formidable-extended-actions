@@ -92,12 +92,12 @@ final class Redirects {
         if (parameterName == null || parameterName.isBlank()) {
             return Optional.empty();
         }
-        Optional<String> page = RedirectTargets.pathOnServer(referer, serverName);
-        int question = page.map(path -> path.indexOf('?')).orElse(-1);
+        String page = RedirectTargets.pathOnServer(referer, serverName).orElse("");
+        int question = page.indexOf('?');
         if (question < 0) {
             return Optional.empty();
         }
-        for (String pair : page.get().substring(question + 1).split("&")) {
+        for (String pair : page.substring(question + 1).split("&")) {
             int equals = pair.indexOf('=');
             if (parameterName.equals(decode(equals < 0 ? pair : pair.substring(0, equals)))) {
                 return RedirectTargets.sameOriginPath(equals < 0 ? "" : decode(pair.substring(equals + 1)));

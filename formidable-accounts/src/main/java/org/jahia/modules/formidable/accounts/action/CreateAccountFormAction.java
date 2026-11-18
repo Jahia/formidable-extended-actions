@@ -18,8 +18,10 @@ import org.jahia.modules.formidable.accounts.security.UserNames;
 import org.jahia.modules.formidable.engine.api.ContextualFormAction;
 import org.jahia.modules.formidable.engine.api.FormAction;
 import org.jahia.modules.formidable.engine.api.FormActionContext;
+import org.jahia.modules.formidable.accounts.messages.Refusals;
 import org.jahia.modules.formidable.engine.api.FormActionException;
 import org.jahia.modules.formidable.engine.api.FormActionResult;
+import org.jahia.modules.formidable.engine.api.SensitiveFields;
 import org.jahia.services.content.JCRNodeWrapper;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -113,8 +115,8 @@ public class CreateAccountFormAction implements ContextualFormAction {
 
     /** The password arrives as a sensitive value: this action is one of the two the engine hands it to. */
     @Override
-    public boolean consumesSensitiveValues() {
-        return true;
+    public SensitiveFields sensitiveFieldsConsumed(JCRNodeWrapper actionNode) {
+        return SensitiveFields.all();
     }
 
     @Override
@@ -142,10 +144,10 @@ public class CreateAccountFormAction implements ContextualFormAction {
         }
         Optional<String> username = email == null || !validEmail(email) ? Optional.empty() : UserNames.forRegistration(email, directory::isValidUsername);
         if (username.isEmpty()) {
-            throw FormActionException.refusal(422, "sign-up refused: the e-mail is not usable", VisitorText.INVALID_EMAIL.in(locale));
+            throw Refusals.refusal(422, "sign-up refused: the e-mail is not usable", VisitorText.INVALID_EMAIL.in(locale));
         }
         if (!PasswordPolicy.accepts(password, ActionProps.string(action, "passwordPattern"))) {
-            throw FormActionException.refusal(422, "sign-up refused: the password does not meet the rule", VisitorText.PASSWORD_POLICY.in(locale));
+            throw Refusals.refusal(422, "sign-up refused: the password does not meet the rule", VisitorText.PASSWORD_POLICY.in(locale));
         }
 
         boolean activation = ActionProps.bool(action, "activationRequired", false);
@@ -184,10 +186,10 @@ public class CreateAccountFormAction implements ContextualFormAction {
                 log.info("[formidable-accounts] A sign-up for an address that is already registered was answered as a new one.");
                 return pendingAnswer(action, locale, redirect);
             }
-            // the reason is for the log; the visitor reads one sentence whatever it was. Without activation the visitor is
-            // signed in at once, so a sign-up form cannot hide that an address is taken: protect it with activation.
-            log.warn("[formidable-accounts] An account was not created ({}).", e.refusal());
-            throw FormActionException.refusal(422, "sign-up refused: " + e.refusal(), VisitorText.GENERIC_FAILURE.in(locale), e);
+            // the reason is for the log (the engine logs the failure's message); the visitor reads one sentence whatever it
+            // was. Without activation the visitor is signed in at once, so a sign-up form cannot hide that an address is
+            // taken: protect it with activation.
+            throw Refusals.refusal(422, "sign-up refused: " + e.refusal(), VisitorText.GENERIC_FAILURE.in(locale), e);
         }
 
         if (activation) {
@@ -202,7 +204,7 @@ public class CreateAccountFormAction implements ContextualFormAction {
             }
         }
         log.info("[formidable-accounts] The account {} was created{}.", created.identifier(), signIn ? " and signed in" : "");
-        return redirect.map(FormActionResult::redirect).orElseGet(FormActionResult::none);
+        return redirect.map(target -> Redirects.withRedirect(FormActionResult.none(), target)).orElseGet(FormActionResult::none);
     }
 
     private FormActionResult awaitActivation(FormActionContext context, JCRNodeWrapper action, String email, Created created,
@@ -219,8 +221,8 @@ public class CreateAccountFormAction implements ContextualFormAction {
         } catch (ActivationMailer.MailUnavailableException e) {
             // an account nobody can activate is worse than no account: remove it, so the visitor can try again
             directory.delete(created.identifier());
-            log.error("[formidable-accounts] The activation e-mail of {} could not be sent: the account was removed.", created.identifier(), e);
-            throw FormActionException.refusal(503, "sign-up refused: the activation e-mail could not be sent", VisitorText.UNAVAILABLE.in(locale), e);
+            throw Refusals.refusal(503, "sign-up refused: the activation e-mail of " + created.identifier()
+                    + " could not be sent, the account was removed", VisitorText.UNAVAILABLE.in(locale), e);
         }
         log.info("[formidable-accounts] The account {} was created and awaits its activation.", created.identifier());
         return pendingAnswer(action, locale, redirect);
@@ -229,8 +231,8 @@ public class CreateAccountFormAction implements ContextualFormAction {
     /** "Check your mailbox" (or the action's own message), and the page to go to: the one answer of a sign-up with activation. */
     private static FormActionResult pendingAnswer(JCRNodeWrapper action, Locale locale, Optional<String> redirect) {
         String pending = ActionProps.string(action, "pendingMessage");
-        FormActionResult result = FormActionResult.message(pending != null ? pending : VisitorText.CHECK_MAILBOX.in(locale));
-        return redirect.map(result::withRedirect).orElse(result);
+        FormActionResult result = FormActionResult.showMessage(pending != null ? pending : VisitorText.CHECK_MAILBOX.in(locale));
+        return redirect.map(target -> Redirects.withRedirect(result, target)).orElse(result);
     }
 
     private static String field(FormActionContext context, String fieldName) {
@@ -243,6 +245,6 @@ public class CreateAccountFormAction implements ContextualFormAction {
     }
 
     private static FormActionException unavailable(Locale locale) {
-        return FormActionException.refusal(503, "sign-up refused: the action is misconfigured", VisitorText.UNAVAILABLE.in(locale));
+        return Refusals.refusal(503, "sign-up refused: the action is misconfigured", VisitorText.UNAVAILABLE.in(locale));
     }
 }

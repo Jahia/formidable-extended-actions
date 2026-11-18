@@ -1,5 +1,6 @@
 package org.jahia.modules.formidable.accounts.security;
 
+import org.jahia.modules.formidable.accounts.messages.Refusals;
 import org.jahia.modules.formidable.accounts.TestSupport;
 import org.jahia.modules.formidable.accounts.config.AccountsConfigService;
 import org.jahia.modules.formidable.accounts.messages.VisitorText;
@@ -48,7 +49,7 @@ class AccountsGuardTest {
                 () -> guard(true, 20, 5).requireProtectedForm(context(TestSupport.form(false, true))));
 
         assertEquals(503, refusal.getHttpStatus());
-        assertEquals(VisitorText.UNAVAILABLE.in(Locale.FRENCH), refusal.getVisitorMessage());
+        assertEquals(VisitorText.UNAVAILABLE.in(Locale.FRENCH), Refusals.visitorText(refusal));
         assertDoesNotThrow(() -> guard(false, 20, 5).requireProtectedForm(context(TestSupport.form(false, true))));
     }
 
@@ -77,7 +78,7 @@ class AccountsGuardTest {
         FormActionException refusal = assertThrows(FormActionException.class, () -> guard.admitSignUp(request, "another@example.com", Locale.ENGLISH));
 
         assertEquals(429, refusal.getHttpStatus());
-        assertEquals(VisitorText.TOO_MANY_ATTEMPTS.english(), refusal.getVisitorMessage());
+        assertEquals(VisitorText.TOO_MANY_ATTEMPTS.english(), Refusals.visitorText(refusal));
         guard.admitSignUp(TestSupport.request("203.0.113.8", null), "another@example.com", Locale.ENGLISH);
     }
 
@@ -121,7 +122,7 @@ class AccountsGuardTest {
 
         FormActionException refusal = assertThrows(FormActionException.class, () -> guard.admitSignIn(request, "ghost@example.com", Locale.ENGLISH));
 
-        assertEquals(VisitorText.TOO_MANY_ATTEMPTS.english(), refusal.getVisitorMessage());
+        assertEquals(VisitorText.TOO_MANY_ATTEMPTS.english(), Refusals.visitorText(refusal));
     }
 
     @Test
@@ -172,7 +173,7 @@ class AccountsGuardTest {
         FormActionException refusal = assertThrows(FormActionException.class, () -> guard(true, 20, 5).requireProtectedForm(byContributor));
 
         assertEquals(503, refusal.getHttpStatus());
-        assertEquals(VisitorText.UNAVAILABLE.in(Locale.FRENCH), refusal.getVisitorMessage());
+        assertEquals(VisitorText.UNAVAILABLE.in(Locale.FRENCH), Refusals.visitorText(refusal));
     }
 
     @Test

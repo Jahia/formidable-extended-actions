@@ -10,8 +10,10 @@ import org.jahia.modules.formidable.accounts.security.UserNames;
 import org.jahia.modules.formidable.engine.api.ContextualFormAction;
 import org.jahia.modules.formidable.engine.api.FormAction;
 import org.jahia.modules.formidable.engine.api.FormActionContext;
+import org.jahia.modules.formidable.accounts.messages.Refusals;
 import org.jahia.modules.formidable.engine.api.FormActionException;
 import org.jahia.modules.formidable.engine.api.FormActionResult;
+import org.jahia.modules.formidable.engine.api.SensitiveFields;
 import org.jahia.services.content.JCRNodeWrapper;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -88,8 +90,8 @@ public class SignInFormAction implements ContextualFormAction {
 
     /** The password arrives as a sensitive value: this action is one of the two the engine hands it to. */
     @Override
-    public boolean consumesSensitiveValues() {
-        return true;
+    public SensitiveFields sensitiveFieldsConsumed(JCRNodeWrapper actionNode) {
+        return SensitiveFields.all();
     }
 
     @Override
@@ -102,7 +104,7 @@ public class SignInFormAction implements ContextualFormAction {
         String passwordField = ActionProps.string(action, "passwordField");
         if (loginField == null || passwordField == null) {
             log.error("[formidable-accounts] The Sign in action {} has no login or password field chosen: the submission is refused.", action.getPath());
-            throw FormActionException.refusal(503, "sign-in refused: the action is misconfigured", VisitorText.UNAVAILABLE.in(locale));
+            throw Refusals.refusal(503, "sign-in refused: the action is misconfigured", VisitorText.UNAVAILABLE.in(locale));
         }
         String typed = context.parameter(loginField);
         HttpServletRequest request = context.request();
@@ -112,7 +114,7 @@ public class SignInFormAction implements ContextualFormAction {
         if (password == null && context.parameter(passwordField) != null) {
             log.error("[formidable-accounts] The password field '{}' of {} is not a sensitive field (use a password input): the submission is refused.",
                     passwordField, action.getPath());
-            throw FormActionException.refusal(503, "sign-in refused: the action is misconfigured", VisitorText.UNAVAILABLE.in(locale));
+            throw Refusals.refusal(503, "sign-in refused: the action is misconfigured", VisitorText.UNAVAILABLE.in(locale));
         }
         Optional<String> username = UserNames.forSignIn(typed, directory::isValidUsername);
         if (username.isEmpty() || password == null || password.length() > PasswordPolicy.MAX_LENGTH) {
@@ -134,10 +136,10 @@ public class SignInFormAction implements ContextualFormAction {
         switch (outcome) {
             case SIGNED_IN:
                 guard.signInSucceeded(request, typed);
-                return redirect.map(FormActionResult::redirect).orElseGet(FormActionResult::none);
+                return redirect.map(target -> Redirects.withRedirect(FormActionResult.none(), target)).orElseGet(FormActionResult::none);
             case NOT_ACTIVE:
                 guard.signInFailed(request, typed);
-                throw FormActionException.refusal(422, "sign-in refused: the account is locked", VisitorText.ACCOUNT_NOT_ACTIVE.in(locale));
+                throw Refusals.refusal(422, "sign-in refused: the account is locked", VisitorText.ACCOUNT_NOT_ACTIVE.in(locale));
             default:
                 guard.signInFailed(request, typed);
                 throw failure(action, locale);
@@ -146,6 +148,6 @@ public class SignInFormAction implements ContextualFormAction {
 
     private static FormActionException failure(JCRNodeWrapper action, Locale locale) {
         String custom = ActionProps.string(action, "failureMessage");
-        return FormActionException.refusal(422, "sign-in refused", custom != null ? custom : VisitorText.SIGN_IN_FAILED.in(locale));
+        return Refusals.refusal(422, "sign-in refused", custom != null ? custom : VisitorText.SIGN_IN_FAILED.in(locale));
     }
 }

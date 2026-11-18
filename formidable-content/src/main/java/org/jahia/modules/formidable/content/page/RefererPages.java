@@ -15,7 +15,7 @@ import java.util.regex.Pattern;
  * only <em>proposes</em> paths; the action resolves them with the submitter's own live session, keeps the first that is
  * a readable page or main resource of the form's site, and leaves the property empty otherwise.
  *
- * <p>What is accepted, on the host the request reached ({@link RedirectTargets#pathOfReferer}): a path under
+ * <p>What is accepted, on the host the request reached ({@link RedirectTargets#pathOnServer}): a path under
  * {@code /sites/<siteKey>/...}, optionally behind a language ({@code /fr/sites/...}) or behind Jahia's own render
  * prefix ({@code /cms/render/live/fr/sites/...}); the query and the fragment are dropped; the extension ({@code .html},
  * and a view name before it) is dropped from the last segment. What is refused: another site, anything outside
@@ -43,7 +43,7 @@ public final class RefererPages {
         if (siteKey == null || siteKey.isBlank()) {
             return List.of();
         }
-        Optional<String> pathAndQuery = RedirectTargets.pathOfReferer(referer, serverName);
+        Optional<String> pathAndQuery = RedirectTargets.pathOnServer(referer, serverName);
         if (pathAndQuery.isEmpty()) {
             return List.of();
         }

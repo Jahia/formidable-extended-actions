@@ -23,7 +23,7 @@ actions keeps working once the module replaces it.
 
 ## Requirements
 
-- **Formidable core**: `formidable-engine` **0.6.0-SNAPSHOT** (declared `formidable-engine=0.6` in `Jahia-Depends` by accounts
+- **Formidable core**: `formidable-engine` **0.6.0**, the released version (declared `formidable-engine=0.6` in `Jahia-Depends` by accounts
   and content) with the contextual-action extension point
   ([Jahia/formidable#406](https://github.com/Jahia/formidable/pull/406), being reduced to that extension point). The accounts
   actions need `formidable-extended-inputs` for the password field.
@@ -49,8 +49,7 @@ the front end (`yarn install`, `yarn lint`, then `yarn build`: `tsc --noEmit`, `
 and `javascript/apps/package.json`. Use Maven 3.8 (pinned to `maven = "3"` in `mise.toml`: 3.9 logs dependency-scan errors in
 the Jahia plugin and may write a wrong `Import-Package`; check the manifest if you build with 3.9).
 
-`formidable-engine:0.6.0-SNAPSHOT` must be in the local repository: build it in a Formidable checkout
-(`mvn -o -q install -DskipTests -pl formidable-engine`).
+`formidable-engine:0.6.0` is resolved from Jahia's Maven repository; nothing has to be built first.
 
 Front end only: `yarn install`, then `yarn lint`, `yarn test` or `yarn build` from the root (every workspace) or from a
 module (never `yarn dev` from an agent). `yarn check:forms` runs the editor layout check.

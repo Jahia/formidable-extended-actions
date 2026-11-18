@@ -56,7 +56,7 @@ public class RedirectFormAction implements ContextualFormAction {
     private final PageUrls pageUrls;
 
     public RedirectFormAction() {
-        this(PageLinks::pathOf);
+        this(PageLinks::urlOf);
     }
 
     RedirectFormAction(PageUrls pageUrls) {
@@ -75,7 +75,7 @@ public class RedirectFormAction implements ContextualFormAction {
             String type = action.hasProperty(TARGET_TYPE)
                     ? action.getProperty(TARGET_TYPE).getString() : TARGET_PAGE;
             Optional<String> target = TARGET_PATH.equals(type) ? path(action) : page(context, action);
-            return target.map(FormActionResult::redirect).orElseGet(FormActionResult::none);
+            return target.map(FormActionResult::redirectTo).orElseGet(FormActionResult::none);
         } catch (RepositoryException | RuntimeException e) {
             // never fail a submission over where to send the visitor next
             log.warn("[RedirectFormAction] The redirect target could not be resolved: the submission is accepted without a redirect.", e);

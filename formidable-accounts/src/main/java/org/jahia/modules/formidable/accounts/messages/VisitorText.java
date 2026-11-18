@@ -1,8 +1,8 @@
 package org.jahia.modules.formidable.accounts.messages;
 
-import org.jahia.modules.formidable.engine.api.VisitorMessages;
-
 import java.util.Locale;
+import java.util.MissingResourceException;
+import java.util.ResourceBundle;
 
 /**
  * Every sentence a visitor can read from these actions, with its resource-bundle key and an English last resort, so a
@@ -66,6 +66,15 @@ public enum VisitorText {
      * @return the sentence in that locale, never {@code null}
      */
     public String in(Locale locale) {
-        return VisitorMessages.resolve(VisitorText.class.getClassLoader(), BUNDLE, key, locale, english);
+        // The bundle of this module, read without the platform's default-locale fallback: a missing translation
+        // answers the English sentence, never another language's.
+        try {
+            ResourceBundle bundle = ResourceBundle.getBundle(BUNDLE, locale == null ? Locale.ENGLISH : locale,
+                    VisitorText.class.getClassLoader(), ResourceBundle.Control.getNoFallbackControl(ResourceBundle.Control.FORMAT_PROPERTIES));
+            String text = bundle.containsKey(key) ? bundle.getString(key) : null;
+            return text == null || text.isBlank() ? english : text;
+        } catch (MissingResourceException e) {
+            return english;
+        }
     }
 }

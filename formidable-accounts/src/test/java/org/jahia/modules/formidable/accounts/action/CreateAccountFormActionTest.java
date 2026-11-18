@@ -1,5 +1,6 @@
 package org.jahia.modules.formidable.accounts.action;
 
+import org.jahia.modules.formidable.accounts.messages.Refusals;
 import org.jahia.modules.formidable.accounts.TestSupport;
 import org.jahia.modules.formidable.accounts.account.AccountDirectory.AccountException;
 import org.jahia.modules.formidable.accounts.account.AccountDirectory.Refusal;
@@ -101,7 +102,7 @@ class CreateAccountFormActionTest {
     @Test
     void theActionDeclaresItConsumesSensitiveValuesAndHandlesItsNodeType() {
         // Verifies the SPI declarations the engine relies on.
-        assertTrue(action.consumesSensitiveValues());
+        assertTrue(action.sensitiveFieldsConsumed(null).selectsAll());
         assertEquals("fmdbacc:createAccountAction", action.getNodeType());
     }
 
@@ -148,9 +149,9 @@ class CreateAccountFormActionTest {
             directory.failure = new AccountException(reason, "reason");
             FormActionException e = refusal(context("ada@example.com", PASSWORD));
             assertEquals(422, e.getHttpStatus());
-            assertEquals(VisitorText.GENERIC_FAILURE.in(FRENCH), e.getVisitorMessage());
-            sentence = sentence == null ? e.getVisitorMessage() : sentence;
-            assertEquals(sentence, e.getVisitorMessage());
+            assertEquals(VisitorText.GENERIC_FAILURE.in(FRENCH), Refusals.visitorText(e));
+            sentence = sentence == null ? Refusals.visitorText(e) : sentence;
+            assertEquals(sentence, Refusals.visitorText(e));
         }
         assertTrue(auth.calls.isEmpty());
     }
@@ -160,7 +161,7 @@ class CreateAccountFormActionTest {
         // Verifies the policy sentence, and that it does not depend on whether the address exists (nothing was looked up).
         FormActionException e = refusal(context("ada@example.com", "weak"));
 
-        assertEquals(VisitorText.PASSWORD_POLICY.in(FRENCH), e.getVisitorMessage());
+        assertEquals(VisitorText.PASSWORD_POLICY.in(FRENCH), Refusals.visitorText(e));
         assertTrue(directory.created.isEmpty());
     }
 
@@ -171,14 +172,14 @@ class CreateAccountFormActionTest {
 
         action.execute(context("ada@example.com", "abcdefghijkl"));
         assertEquals(1, directory.created.size());
-        assertEquals(VisitorText.PASSWORD_POLICY.in(FRENCH), refusal(context("other@example.com", PASSWORD)).getVisitorMessage());
+        assertEquals(VisitorText.PASSWORD_POLICY.in(FRENCH), Refusals.visitorText(refusal(context("other@example.com", PASSWORD))));
     }
 
     @Test
     void anEmailThatIsNotAnAddressIsRefused() {
         // Verifies the e-mail check: missing, malformed, and one the platform could not turn into a user name.
         for (String bad : new String[]{null, "", "not-an-address", "a@b", "@example.com"}) {
-            assertEquals(VisitorText.INVALID_EMAIL.in(FRENCH), refusal(context(bad, PASSWORD)).getVisitorMessage(), String.valueOf(bad));
+            assertEquals(VisitorText.INVALID_EMAIL.in(FRENCH), Refusals.visitorText(refusal(context(bad, PASSWORD))), String.valueOf(bad));
         }
         assertTrue(directory.created.isEmpty());
     }
@@ -193,7 +194,7 @@ class CreateAccountFormActionTest {
         FormActionException e = refusal(plain);
 
         assertEquals(503, e.getHttpStatus());
-        assertEquals(VisitorText.UNAVAILABLE.in(FRENCH), e.getVisitorMessage());
+        assertEquals(VisitorText.UNAVAILABLE.in(FRENCH), Refusals.visitorText(e));
         assertTrue(directory.created.isEmpty());
     }
 
@@ -225,7 +226,7 @@ class CreateAccountFormActionTest {
         FormActionException e = refusal(context("a3@example.com", PASSWORD));
 
         assertEquals(429, e.getHttpStatus());
-        assertEquals(VisitorText.TOO_MANY_ATTEMPTS.in(FRENCH), e.getVisitorMessage());
+        assertEquals(VisitorText.TOO_MANY_ATTEMPTS.in(FRENCH), Refusals.visitorText(e));
         assertEquals(2, directory.created.size());
     }
 
@@ -346,7 +347,7 @@ class CreateAccountFormActionTest {
         FormActionException e = refusal(context);
 
         assertFalse(String.valueOf(e.getMessage()).contains(PASSWORD));
-        assertFalse(String.valueOf(e.getVisitorMessage()).contains(PASSWORD));
+        assertFalse(String.valueOf(Refusals.visitorText(e)).contains(PASSWORD));
         assertFalse(context.toString().contains(PASSWORD));
     }
 }

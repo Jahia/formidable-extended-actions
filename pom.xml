@@ -31,6 +31,7 @@
         <module>formidable-accounts</module>
         <module>formidable-content</module>
         <module>formidable-redirect</module>
+        <module>formidable-pdf</module>
         <module>formidable-salesforce</module>
         <module>formidable-hubspot</module>
         <module>formidable-efficy</module>

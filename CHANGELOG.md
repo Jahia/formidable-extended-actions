@@ -17,6 +17,11 @@ PIDs, GraphQL fields, selector types and module ids are those of the separate mo
 
 ### New features
 
+* **PDF copy** - a new action (`fmdbpdf:pdfCopyAction`, module `formidable-pdf`) gives the visitor a PDF of what
+  they submitted, with a reference and the time of the submission. A download button appears with the confirmation
+  message, once every action of the form succeeded. The copy is kept in memory for 30 minutes by default
+  (`org.jahia.modules.formidable.pdf.cfg`) and nothing is written to the repository. See [docs/pdf.md](docs/pdf.md).
+
 * **Accounts** - `signInBackOfficeAccounts` (off by default) lets the Sign in action sign in back-office accounts by their
   user name, for instances where they have neither a second factor nor SSO on the platform's login (a demonstration).
 * **Accounts** - Create account (`fmdbacc:createAccountAction`) and Sign in (`fmdbacc:signInAction`), with optional e-mail

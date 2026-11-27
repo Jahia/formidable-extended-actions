@@ -1,8 +1,9 @@
 # AGENTS.md - formidable-extended-actions
 
-A monorepo of six independent OSGi modules (group `org.jahia.community.modules`), one per family of custom
+A monorepo of eight independent OSGi modules (group `org.jahia.community.modules`), one per family of custom
 [Formidable](https://github.com/Jahia/formidable) form actions: `formidable-accounts` (create account, sign in),
-`formidable-content` (create content), `formidable-redirect` (redirect), `formidable-salesforce`, `formidable-hubspot` and `formidable-efficy` (CRM
+`formidable-content` (create content), `formidable-redirect` (redirect), `formidable-pdf` (PDF copy),
+`formidable-flight-check` (a field action: flight number check and airport autofill), `formidable-salesforce`, `formidable-hubspot` and `formidable-efficy` (CRM
 connectors). The families used to be modules of the core repository; they are shipped here outside the core release, and a
 Jahia installs only the ones it uses. What each one does: [README.md](README.md) and [docs/](docs/README.md).
 

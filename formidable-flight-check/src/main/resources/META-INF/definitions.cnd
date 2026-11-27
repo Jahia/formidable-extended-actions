@@ -1,0 +1,21 @@
+<jnt = 'http://www.jahia.org/jahia/nt/1.0'>
+<mix = 'http://www.jcp.org/jcr/mix/1.0'>
+<fmdbmix = 'http://www.jahia.org/jahia/fmdb/mix/1.0'>
+<fmdbflt = 'http://modules.jahia.org/formidable-flight-check/nt/1.0'>
+
+// A check of a flight number field: the airline's own schedule, AeroDataBox for every other airline.
+// The contributor settings (message, trigger, block or warn, unavailable means) come with fmdbmix:fieldAction;
+// the service is the module's own configuration, nothing to pick here.
+// autofill: once the visitor has given the date and the flight number, the page looks the flight up and writes the
+// departure and arrival airports into the fields picked below (fields of the same form, by name). A list that has no
+// option for the airport gets its "another airport" option (otherOptionValue) and the airport goes into the matching
+// "other" field, which a rule of the form shows only when that option is chosen.
+[fmdbflt:flightCheckAction] > jnt:content, fmdbmix:fieldAction, mix:title
+ - jcr:title (string) = resourceBundle('fmdbflt_flightCheckAction') autocreated i18n
+ - autofill (boolean) = false autocreated indexed=no
+ - dateField (string, choicelist[fmdbfltFormFields='date']) indexed=no
+ - departureField (string, choicelist[fmdbfltFormFields='place']) indexed=no
+ - arrivalField (string, choicelist[fmdbfltFormFields='place']) indexed=no
+ - departureOtherField (string, choicelist[fmdbfltFormFields='text']) indexed=no
+ - arrivalOtherField (string, choicelist[fmdbfltFormFields='text']) indexed=no
+ - otherOptionValue (string) = 'other' indexed=no

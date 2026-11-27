@@ -17,6 +17,16 @@ PIDs, GraphQL fields, selector types and module ids are those of the separate mo
 
 ### New features
 
+* **Flight number check** - a new field action (`fmdbflt:flightCheckAction`, module `formidable-flight-check`) checks
+  a flight number as the visitor leaves the field and at submission: against the site's own airline schedule
+  (`ownFlights`, empty by default) or AeroDataBox through RapidAPI (the operator's key in
+  `org.jahia.modules.formidable.flightcheck.cfg`). With the flight date given, the page fills the departure and arrival
+  airports into the fields the contributor picked and says the route. AeroDataBox is asked for the flight departing on
+  that date. See [docs/flight-check.md](docs/flight-check.md).
+* **Demo** - `demo/skylantern-forms`: a Formidable demo site seeded by script (contact, event registration with
+  jExperience prefill, a three-step baggage claim with the flight check and the PDF copy), sample answers spread over
+  four weeks, and a copy of the claim form restyled by its Custom CSS (Formidable's tokens, then layout).
+
 * **PDF copy** - a new action (`fmdbpdf:pdfCopyAction`, module `formidable-pdf`) gives the visitor a PDF of what
   they submitted, with a reference and the time of the submission. A download button appears with the confirmation
   message, once every action of the form succeeded. The copy is kept in memory for 30 minutes by default

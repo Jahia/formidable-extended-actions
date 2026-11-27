@@ -1,0 +1,10 @@
+# Do not edit - Configuration file provided by module, any change will be lost
+formidable-flight-lookup:
+  description: Can look a flight up to fill a Formidable form
+  metadata:
+    visible: false
+  auto_apply:
+    - origin: hosted
+  grants:
+    - api: formidable-flight-lookup
+      node: none

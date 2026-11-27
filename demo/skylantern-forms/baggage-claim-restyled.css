@@ -1,0 +1,141 @@
+/* Baggage claim, restyled as a boarding pass: the Custom CSS of the form "Baggage claim (restyled)".
+
+   Part 1 changes tokens only: Formidable's own variables (--fmdb-*, --fmdbext-*, docs/styling/css-variables.md
+   in Jahia/formidable) and the site's tokens (--ctpl-*), which classic-templates reads in its form rules. Set on
+   the form, they reach every field, step and button inside it, and nothing outside it.
+   Part 2 changes the layout with a few rules on Formidable's class hooks (docs/styling/class-hooks.md).
+   Every colour pair below meets WCAG 2.1 AA. */
+
+/* ---- Part 1: tokens --------------------------------------------------------------------------------------- */
+.fmdb-form {
+  /* The site's light-dark() tokens resolve to their light side inside the form, native controls too. */
+  color-scheme: light;
+
+  /* The pass: four colours, named once. Change --pass-accent live to show the whole form follow. */
+  --pass-paper: #fbf6ec;
+  --pass-ink: #221b14;
+  --pass-muted: #6a5d4d;
+  --pass-accent: #b4400f;
+  --pass-accent-dark: #8e300a;
+
+  /* The site's tokens, as the template set's field rules read them. */
+  --ctpl-color-text: var(--pass-ink);
+  --ctpl-color-text-muted: var(--pass-muted);
+  --ctpl-color-border: #d9ccb8;
+  --ctpl-color-border-strong: var(--pass-muted);
+  --ctpl-color-surface-raised: #fffdf8;
+  --ctpl-color-surface-sunken: #ece2d2;
+  --ctpl-color-surface-page: var(--pass-paper);
+  --ctpl-color-accent: var(--pass-accent);
+  --ctpl-color-accent-subtle: #f6e3d6;
+  --ctpl-color-action: var(--pass-accent);
+  --ctpl-color-focus: var(--pass-accent);
+  --ctpl-focus-ring: 3px solid var(--pass-accent);
+  --ctpl-color-danger: #a01818;
+  --ctpl-radius-md: 0;
+  --ctpl-radius-sm: 0;
+  --ctpl-measure: 100%;
+
+  /* Formidable's buttons: pills, the accent for the main one. */
+  --fmdb-btn-radius: 999px;
+  --fmdb-btn-padding: 0.75rem 1.75rem;
+  --fmdb-btn-font-weight: 700;
+  --fmdb-btn-primary-bg: var(--pass-accent);
+  --fmdb-btn-primary-color: #fff;
+  --fmdb-btn-primary-hover-bg: var(--pass-accent-dark);
+  --fmdb-btn-secondary-bg: transparent;
+  --fmdb-btn-secondary-color: var(--pass-ink);
+  --fmdb-btn-secondary-border: var(--pass-ink);
+  --fmdb-btn-secondary-hover-bg: #ece2d2;
+  --fmdb-btn-focus-outline-color: var(--pass-accent);
+
+  /* Formidable's steps: no underline, square number badges. */
+  --fmdb-steps-nav-gap: 0.5rem;
+  --fmdb-step-border-width: 0;
+  --fmdb-step-padding: 0.4rem 0.9rem 0.4rem 0.4rem;
+  --fmdb-step-color: var(--pass-muted);
+  --fmdb-step-active-color: var(--pass-ink);
+  --fmdb-step-done-color: var(--pass-ink);
+  --fmdb-step-number-radius: 0.25rem;
+  --fmdb-step-number-bg: #ffffff;
+  --fmdb-step-number-color: var(--pass-ink);
+  --fmdb-step-active-number-bg: var(--pass-accent);
+  --fmdb-step-active-number-color: #fff;
+  --fmdb-step-done-number-bg: var(--pass-ink);
+  --fmdb-step-done-number-color: var(--pass-paper);
+
+  /* Messages and the extended inputs. */
+  --fmdb-validation-error-color: #a01818;
+  --fmdb-invalid-border-color: #a01818;
+  --fmdb-invalid-outline-color: #a01818;
+  --fmdbext-chip-on-bg: var(--pass-accent);
+  --fmdbext-focus: var(--pass-accent);
+  --fmdbext-rating-on: var(--pass-accent);
+}
+
+/* ---- Part 2: layout --------------------------------------------------------------------------------------- */
+
+/* The form as a pass: paper, a coloured stub across the top, a shadow off the page. */
+.fmdb-form {
+  padding: 2rem 2rem 2.25rem;
+  border-top: 0.75rem solid var(--pass-accent);
+  border-radius: 1.25rem;
+  background: var(--pass-paper);
+  color: var(--pass-ink);
+  box-shadow: 0 1rem 2.5rem rgb(0 0 0 / 0.35);
+  /* No gap between the form's own rows: the hidden steps' wrappers would each add one above the buttons. */
+  row-gap: 0;
+}
+.fmdb-form .fmdb-form-intro {
+  margin-block-end: 1.25rem;
+}
+
+/* Labels and step names as a pass prints them: small, spaced capitals. */
+.fmdb-form :is(.fmdb-form-label, .fmdb-group-legend, .fmdb-step-label) {
+  font-size: 0.75rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+/* Text fields underlined, not boxed. */
+form.fmdb-form .fmdb-form-control:not([type="radio"], [type="checkbox"], [type="color"], [type="file"]) {
+  padding-inline: 0;
+  border-width: 0 0 2px;
+  background: transparent;
+}
+
+/* Steps as tabs: each one a pill, the current one filled. */
+.fmdb-form .fmdb-step-indicator {
+  border-radius: 999px;
+  background: var(--ctpl-color-surface-sunken);
+}
+.fmdb-form .fmdb-step-indicator[aria-current="step"] {
+  background: #fffdf8;
+  box-shadow: inset 0 0 0 2px var(--pass-accent);
+}
+
+/* Two columns, as on a pass; a group, a long text, an upload or the consent takes the full row. */
+.fmdb-form .fmdb-step {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 1.5rem;
+}
+.fmdb-form .fmdb-step > .fmdb-form-element:has(fieldset, textarea, [type="file"], .fmdbext-consent) {
+  grid-column: 1 / -1;
+}
+/* The flight check's route line (formidable-flight-check) is a row of its own, under the airports it filled. */
+.fmdb-form .fmdb-step > .fmdbflt-autofill-status {
+  grid-column: 1 / -1;
+  order: 1;
+  margin: 0;
+  color: var(--pass-muted);
+}
+@media (max-width: 40rem) {
+  .fmdb-form .fmdb-step {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* The buttons on the right, like a boarding gate's arrow. */
+.fmdb-form .fmdb-form-actions {
+  justify-content: flex-end;
+}

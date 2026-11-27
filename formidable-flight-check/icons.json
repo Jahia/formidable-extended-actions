@@ -1,0 +1,7 @@
+{
+  "ink": "#22437d",
+  "out": "src/main/resources/icons",
+  "icons": {
+    "fmdbflt:flightCheckAction": "plane"
+  }
+}

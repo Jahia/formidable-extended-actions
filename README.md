@@ -1,13 +1,15 @@
 # formidable-extended-actions
 
 Custom form actions for [Formidable](https://github.com/Jahia/formidable), shipped **outside the Formidable core release** as
-a monorepo of **six independent Jahia modules**, one per action family. A Jahia installs only the families it uses: no
+a monorepo of **eight independent Jahia modules**, one per action family (seven families of form actions and one
+field action). A Jahia installs only the families it uses: no
 Efficy module on a Jahia that has no Efficy. Five of the families used to be modules of the core repository (`Jahia/formidable`); the Redirect action was proposed there and ships here, the core keeping only the mechanism it uses.
 
 | Module (id = artifactId) | Form action(s) | Node types | Java package | Needs | Guide |
 |---|---|---|---|---|---|
 | `formidable-accounts` | Create account, Sign in | `fmdbacc:createAccountAction`, `fmdbacc:signInAction` | `org.jahia.modules.formidable.accounts` | Jahia 8.2.3.0+, `formidable-engine=0.6` | [docs/accounts.md](docs/accounts.md) |
 | `formidable-content` | Create content | `fmdbcnt:createContentAction` | `org.jahia.modules.formidable.content` | Jahia 8.2.2.0+, `formidable-engine=0.6` | [docs/content.md](docs/content.md) |
+| `formidable-flight-check` | Flight number check (a field action) | `fmdbflt:flightCheckAction` | `org.jahia.modules.formidable.flightcheck` | Jahia 8.2.2.0+, `formidable-engine=0.6` | [docs/flight-check.md](docs/flight-check.md) |
 | `formidable-pdf` | PDF copy | `fmdbpdf:pdfCopyAction` | `org.jahia.modules.formidable.pdf` | Jahia 8.2.3.0+, `formidable-engine=0.6` | [docs/pdf.md](docs/pdf.md) |
 | `formidable-redirect` | Redirect | `fmdbred:redirectAction` | `org.jahia.modules.formidable.redirect` | Jahia 8.2.2.0+, `formidable-engine=0.6` | [docs/redirect.md](docs/redirect.md) |
 | `formidable-salesforce` | Create Salesforce Lead | `fmdbsfdc:createLeadAction` | `org.jahia.modules.formidable.salesforce` | Jahia 8.2.2.0+, `formidable-engine`, `graphql-dxm-provider` | [docs/salesforce.md](docs/salesforce.md) |
@@ -39,7 +41,7 @@ actions keeps working once the module replaces it.
 
 ```bash
 export JAVA_HOME=$(/usr/libexec/java_home -v 17)   # JDK 17; Node 22 and Yarn 4 on the PATH (see mise.toml)
-mvn clean install                                   # the six jars; add -o to work offline
+mvn clean install                                   # the eight jars; add -o to work offline
 mvn clean install -pl formidable-hubspot            # one module (its parent is resolved from the reactor)
 ```
 
@@ -76,14 +78,15 @@ formidable-<name>/
   UI modules only: package.json, vite.config.ts, tsconfig.json, eslint.config.js, src/javascript/init.tsx (registers
   only its selector types), src/main/resources/javascript/locales/{en,fr}.json (i18n namespace = the module id)
 tests/                  Cypress specs of the families (reference, see tests/README.md)
+demo/skylantern-forms/  a Formidable demo site (three forms, sample answers, a restyled form) seeded by script
 docs/                   one page per family, docs/README.md is the index
 ```
 
 ## Configuration
 
-Only `formidable-accounts` ships a default configuration file
-(`META-INF/configurations/org.jahia.modules.formidable.accounts.cfg`, first line `# default configuration`: Jahia keeps the
-operator's copy on a redeploy). The CRM connections are factory configurations written by the operator
+`formidable-accounts`, `formidable-pdf` and `formidable-flight-check` ship a default configuration file
+(`META-INF/configurations/org.jahia.modules.formidable.<name>.cfg`, first line `# default configuration`: Jahia keeps the
+operator's copy on a redeploy). The flight check's RapidAPI key goes in the operator's copy, never in the repository. The CRM connections are factory configurations written by the operator
 (`org.jahia.modules.formidable.salesforce-<id>.cfg`, `...hubspot-<id>.cfg`, `...efficy-<id>.cfg`): nothing is bundled, a
 credential never enters the repository.
 

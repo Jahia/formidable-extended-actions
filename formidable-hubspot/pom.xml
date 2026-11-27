@@ -12,7 +12,7 @@
     <packaging>bundle</packaging>
     <description>Formidable HubSpot - "Create HubSpot Contact" form action with a field-mapping selector for Content Editor, and the GraphQL that serves the selector</description>
     <properties>
-        <jahia-depends>default,formidable-engine,graphql-dxm-provider</jahia-depends>
+        <jahia-depends>default,formidable-engine,graphql-dxm-provider,app-shell=4.0</jahia-depends>
     </properties>
 
     <dependencies>

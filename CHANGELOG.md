@@ -72,6 +72,6 @@ PIDs, GraphQL fields, selector types and module ids are those of the separate mo
   it is compiled against Jahia 8.2.3.2), 8.2.2.0 for the others. `Jahia-Depends` is what each family needs: `graphql-dxm-provider`
   only on the three CRMs.
 * `scripts/check-editor-forms.mjs` checks the forms of every module against that module's own `definitions.cnd`.
-* The UI extensions are built with the versions the Formidable core resolves (`@jahia/vite-federation-plugin` 0.1.1,
-  `@jahia/ui-extender` 1.2.0, `graphql` 16.13.2, `@module-federation/vite` 1.12.3), pinned exactly; `@apollo/client` stays
-  at the host's 3.14.0. A lock resolved from scratch (plugin 0.1.3, ui-extender 1.3.0) broke jContent on a real Jahia.
+* The UI extensions are built with `@jahia/vite-federation-plugin` 0.2 and Vite 8, take the libraries of app-shell 4 as
+  peer dependencies, and the four modules that have one (content and the three CRMs) declare `app-shell=4.0` in
+  `Jahia-Depends`: they refuse to start on app-shell 3, which cannot load their interface.

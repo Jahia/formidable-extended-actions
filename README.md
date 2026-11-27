@@ -7,9 +7,9 @@ Efficy module on a Jahia that has no Efficy. Five of the families used to be mod
 | Module (id = artifactId) | Form action(s) | Node types | Java package | Needs | Guide |
 |---|---|---|---|---|---|
 | `formidable-accounts` | Create account, Sign in | `fmdbacc:createAccountAction`, `fmdbacc:signInAction` | `org.jahia.modules.formidable.accounts` | Jahia 8.2.3.0+, `formidable-engine=0.6` | [docs/accounts.md](docs/accounts.md) |
-| `formidable-content` | Create content | `fmdbcnt:createContentAction` | `org.jahia.modules.formidable.content` | Jahia 8.2.2.0+, `formidable-engine=0.6` | [docs/content.md](docs/content.md) |
+| `formidable-content` | Create content | `fmdbcnt:createContentAction` | `org.jahia.modules.formidable.content` | Jahia 8.2.2.0+, `formidable-engine=0.6`, `app-shell=4.0` | [docs/content.md](docs/content.md) |
 | `formidable-redirect` | Redirect | `fmdbred:redirectAction` | `org.jahia.modules.formidable.redirect` | Jahia 8.2.2.0+, `formidable-engine=0.6` | [docs/redirect.md](docs/redirect.md) |
-| `formidable-salesforce` | Create Salesforce Lead | `fmdbsfdc:createLeadAction` | `org.jahia.modules.formidable.salesforce` | Jahia 8.2.2.0+, `formidable-engine`, `graphql-dxm-provider` | [docs/salesforce.md](docs/salesforce.md) |
+| `formidable-salesforce` | Create Salesforce Lead | `fmdbsfdc:createLeadAction` | `org.jahia.modules.formidable.salesforce` | Jahia 8.2.2.0+, `formidable-engine`, `graphql-dxm-provider`, `app-shell=4.0` | [docs/salesforce.md](docs/salesforce.md) |
 | `formidable-hubspot` | Create HubSpot Contact | `fmdbhs:createContactAction` | `org.jahia.modules.formidable.hubspot` | same | [docs/hubspot.md](docs/hubspot.md) |
 | `formidable-efficy` | Create Efficy Opportunity | `fmdbeff:createOpportunityAction` | `org.jahia.modules.formidable.efficy` | same | [docs/efficy.md](docs/efficy.md) |
 
@@ -31,6 +31,8 @@ actions keeps working once the module replaces it.
   `AuthenticationService`, an OSGi service from that release. The other five modules are compiled against, and ask for,
   Jahia 8.2.2.0.
 - `graphql-dxm-provider` for the three CRM modules (their selectors read the CRM metadata through GraphQL).
+- app-shell 4.0 or later for the four modules with a UI extension (content and the three CRM modules): their Vite build only
+  loads there, and they declare `app-shell=4.0` in `Jahia-Depends`.
 - Enable each module on every site that uses its action (jContent only offers content types of modules enabled on the site;
   the accounts actions also refuse a form whose site did not enable `formidable-accounts`).
 

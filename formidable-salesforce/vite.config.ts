@@ -7,8 +7,6 @@ export default defineConfig({
   },
   plugins: [
     jahia({
-      // No remote type generation: its broker/worker processes outlive the build and hang Maven exec.
-      dts: false,
       exposes: {
         "./init": "./src/javascript/init.tsx",
       },

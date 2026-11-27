@@ -104,7 +104,7 @@ const ConstantValueEditor = ({
                 variant="outlined"
                 data={withStoredOption(options, value)}
                 hasSearch={options.length >= 5}
-                value={value || undefined}
+                value={value || ''}
                 placeholder={t('contactMapping.selectPicklistValue')}
                 isDisabled={readOnly}
                 onChange={(_event, item) => onValueChange(item.value ?? '')}
@@ -121,7 +121,7 @@ const ConstantValueEditor = ({
             <Dropdown
                 variant="outlined"
                 data={withStoredOption(options, value)}
-                value={value || undefined}
+                value={value || ''}
                 placeholder={t('contactMapping.selectPicklistValue')}
                 isDisabled={readOnly}
                 onChange={(_event, item) => onValueChange(item.value ?? '')}
@@ -482,7 +482,7 @@ export const HubspotContactMappingCmp = (props: SelectorProps) => {
                                         variant="outlined"
                                         data={rowSfOptions}
                                         hasSearch={rowSfOptions.length >= 5}
-                                        value={row.hsProperty || undefined}
+                                        value={row.hsProperty || ''}
                                         placeholder={t('contactMapping.selectHubspotField')}
                                         isDisabled={readOnly}
                                         onChange={(_event, item) => handleSfFieldChange(index, item)}
@@ -503,7 +503,7 @@ export const HubspotContactMappingCmp = (props: SelectorProps) => {
                                             variant="outlined"
                                             data={rowFormOptions}
                                             hasSearch={rowFormOptions.length >= 5}
-                                            value={resolvedField?.id ?? (row.fieldName || row.fieldKey || undefined)}
+                                            value={resolvedField?.id ?? (row.fieldName || row.fieldKey || '')}
                                             placeholder={t('contactMapping.selectFormField')}
                                             isDisabled={readOnly}
                                             onChange={(_event, item) => handleFormFieldChange(index, item)}

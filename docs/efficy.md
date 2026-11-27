@@ -83,12 +83,13 @@ Content Editor (jContent, React 18)                  Formidable submission pipel
   Efficy portal modules do. No dependency is embedded: HTTP is the JDK `HttpClient`, JSON the
   platform `org.json`.
 - **Field identity** follows the family rule: `fieldKey`, then uuid, then node name.
-- **Shared front-end libraries.** `@apollo/client` is pinned to the app shell's exact version
-  (3.14.0); never declare it `import: false` in the vite config (see the Salesforce README).
+- **Shared front-end libraries.** `@jahia/vite-federation-plugin` reads `package.json`: the
+  libraries app-shell provides are peer dependencies, never bundled, and `@apollo/client` and
+  Moonstone are shared pooled with the copies of app-shell (see the Salesforce README).
 
 ## Prerequisites
 
-- Jahia 8.2.2.0+, `formidable-engine` 0.6 and `formidable-elements`, `graphql-dxm-provider` (nothing of the other action modules)
+- Jahia 8.2.2.0+, app-shell 4.0+, `formidable-engine` 0.6 and `formidable-elements`, `graphql-dxm-provider` (nothing of the other action modules)
 - An Efficy e-deal tenant (server URL, application context) and an API token allowed to read
   `Person`, read referentials and create the target entity
 - Build: Java 17, Maven 3, Node 22+, Yarn 4

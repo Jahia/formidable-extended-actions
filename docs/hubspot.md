@@ -67,12 +67,11 @@ Content Editor (jContent, React 18)                  Formidable submission pipel
   only stores the connection id.
 - **Authentication** is a HubSpot **private app access token** sent as a Bearer. No dependency
   is embedded: HTTP is the JDK `HttpClient`, JSON the platform `org.json`.
-- **Shared front-end libraries.** `@apollo/client` is pinned in `package.json` to the app shell's
-  exact version (3.14.0): the bundle then shares the same version as the host and the federation
-  runtime never elects a different Apollo copy (two copies on one cache break jContent). Do not
-  declare it `import: false` in the vite config: the Jahia plugin still registers a share entry whose
-  loader throws "must be provided by host", and any remote electing it takes the whole UI down.
-  React, Moonstone and i18next follow the Jahia plugin defaults.
+- **Shared front-end libraries.** `@jahia/vite-federation-plugin` 0.2 reads `package.json` as the
+  federation manifest, and `vite.config.ts` has no `shared` block. React, `react-dom`, `i18next`,
+  `react-i18next` and `@jahia/ui-extender` are peer dependencies: app-shell provides them as
+  singletons, and the bundle holds no copy. `@apollo/client` and Moonstone are dependencies, shared
+  pooled with the copies of app-shell, so jContent and the selector use one Apollo client.
 - **Field identity.** Mapping rows reference a form field by the engine's stable `fieldKey`,
   then by uuid, then by node name.
 - **Property metadata** (`GET /crm/v3/properties/contacts`) is filtered to writable properties
@@ -81,7 +80,7 @@ Content Editor (jContent, React 18)                  Formidable submission pipel
 
 ## Prerequisites
 
-- Jahia 8.2.2.0+, `formidable-engine` 0.6 and `formidable-elements`, `graphql-dxm-provider` (nothing of the other action modules)
+- Jahia 8.2.2.0+, app-shell 4.0+, `formidable-engine` 0.6 and `formidable-elements`, `graphql-dxm-provider` (nothing of the other action modules)
 - A HubSpot portal with a private app (below)
 - Build: Java 17, Maven 3, Node 22, Yarn 4 (see `mise.toml`)
 
@@ -251,7 +250,7 @@ Tests:
 | `MISSING_SCOPES` | Add the contacts read/write and schema read scopes to the private app |
 | `CONFLICT: Contact already exists` with the *create* strategy | Expected: switch to *Update the existing contact with the same email* |
 | Config file ignored, `Permission denied` in the FileInstall log | Make the `.cfg` readable by the Jahia user; FileInstall only rescans a file whose modification time changed |
-| White jContent page after a restart, console shows `Invariant Violation` from Apollo | A bundle registered its own `@apollo/client` as a shared singleton and the runtime elected it over the host's copy. The module pins `@apollo/client` to the host's exact version in `package.json`; keep the pin aligned with the shell when bumping dependencies, and never use `shared: {..., import: false}` |
+| White jContent page after a restart, console shows `Invariant Violation` from Apollo | A bundle registered its own `@apollo/client` as a shared singleton and the runtime elected it over the host's copy. Keep `@apollo/client` in `dependencies`, which the plugin shares pooled, and never add a `shared` block to `vite.config.ts`: `mf-manifest.json` must list `@apollo/client` with `singleton: false` |
 | `ReadOnlyConfigurationException` when saving in the OSGi Configurations Manager | The file is not writable by the Jahia user: `chown` it to that user and `touch` it, FileInstall then drops the READ_ONLY attribute |
 
 ## Limitations and roadmap

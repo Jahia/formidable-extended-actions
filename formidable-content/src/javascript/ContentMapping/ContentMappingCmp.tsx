@@ -111,7 +111,7 @@ const ValueCell = ({row, property, multiple, fields, readOnly, inputId, onField,
                 variant="outlined"
                 data={options}
                 hasSearch={options.length >= 6}
-                value={resolved?.id ?? (row.nodeId || row.fieldName || undefined)}
+                value={resolved?.id ?? (row.nodeId || row.fieldName || '')}
                 placeholder={t(placeholderKey)}
                 isDisabled={readOnly}
                 onChange={(_event, item) => {

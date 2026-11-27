@@ -101,7 +101,7 @@ const ConstantValueEditor = ({
                 variant="outlined"
                 data={withStoredOption(options, value)}
                 hasSearch={options.length >= 5}
-                value={value || undefined}
+                value={value || ''}
                 placeholder={t('leadMapping.selectPicklistValue')}
                 isDisabled={readOnly}
                 onChange={(_event, item) => onValueChange(item.value ?? '')}
@@ -118,7 +118,7 @@ const ConstantValueEditor = ({
             <Dropdown
                 variant="outlined"
                 data={withStoredOption(options, value)}
-                value={value || undefined}
+                value={value || ''}
                 placeholder={t('leadMapping.selectPicklistValue')}
                 isDisabled={readOnly}
                 onChange={(_event, item) => onValueChange(item.value ?? '')}
@@ -479,7 +479,7 @@ export const SalesforceLeadMappingCmp = (props: SelectorProps) => {
                                         variant="outlined"
                                         data={rowSfOptions}
                                         hasSearch={rowSfOptions.length >= 5}
-                                        value={row.sfField || undefined}
+                                        value={row.sfField || ''}
                                         placeholder={t('leadMapping.selectSalesforceField')}
                                         isDisabled={readOnly}
                                         onChange={(_event, item) => handleSfFieldChange(index, item)}
@@ -500,7 +500,7 @@ export const SalesforceLeadMappingCmp = (props: SelectorProps) => {
                                             variant="outlined"
                                             data={rowFormOptions}
                                             hasSearch={rowFormOptions.length >= 5}
-                                            value={resolvedField?.id ?? (row.fieldName || row.fieldKey || undefined)}
+                                            value={resolvedField?.id ?? (row.fieldName || row.fieldKey || '')}
                                             placeholder={t('leadMapping.selectFormField')}
                                             isDisabled={readOnly}
                                             onChange={(_event, item) => handleFormFieldChange(index, item)}

@@ -12,7 +12,7 @@
     <packaging>bundle</packaging>
     <description>Formidable Content - "Create content" form action: a signed-in visitor's submission becomes a content node of a chosen type, with its uploaded files, in a folder their group is entitled to</description>
     <properties>
-        <jahia-depends>default,formidable-engine=0.6</jahia-depends>
+        <jahia-depends>default,formidable-engine=0.6,app-shell=4.0</jahia-depends>
     </properties>
 
     <dependencies>
